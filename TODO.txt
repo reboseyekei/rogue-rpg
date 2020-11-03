@@ -1,0 +1,4 @@
+*Remember me button on the login page doesn't work
+*No working regex for username
+*Username needs to be split into username and providername potentially or username checks for user and organization need to use different regex's
+*Bad practice upon getting the user's profile picture and src for posts
