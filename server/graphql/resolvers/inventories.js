@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const Inventory = require("../../models/Inventory");
-const checkAuth = require("../../util/checkAuth");
 
 module.exports = {
   Query: {
@@ -23,24 +22,6 @@ module.exports = {
     },
   },
   Mutation: {
-    async switchItems(_, { switchItemsInput: { firstInventory, secondInventory, firstItem, secondItem } }) {
-      try {
-        const first = await Inventory.findById(firstInventory);
-        const second = await Inventory.findById(secondInventory);
-
-        //TODO VERIFY CORRECT TYPES (EQUIPMENT SWITCHES)
-        firstModItem = first[firstItem];
-        secondModItem = second[secondItem];
-
-        first[firstItem] = secondModItem;
-        second[secondItem] = firstModItem;
-        await first.save();
-        await second.save();
-        return "Successful item switch";
-      } catch (err) {
-        throw new Error(err);
-      }
-    },
     async deleteItem(_, { deleteItemInput: { inventoryId, target } }) {
       try {
         const inventory = await Inventory.findById(inventoryId);

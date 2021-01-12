@@ -17,7 +17,7 @@ function generateToken(user) {
       username: user.username,
     },
     SECRET_KEY,
-    { expiresIn: "1h" }
+    { expiresIn: "48h" }
   );
 }
 
@@ -28,7 +28,7 @@ module.exports = {
         if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
           throw new Error("Invalid ID");
         }
-        const user = await User.findById(postId);
+        const user = await User.findById(userId);
         if (user) {
           return user;
         } else {
@@ -87,7 +87,6 @@ module.exports = {
         thirteen: { item: null, enchantments: [] },
         fourteen: { item: null, enchantments: [] },
         fifteen: { item: null, enchantments: [] },
-        sixteen: { item: null, enchantments: [] },
       });
 
       const newUser = new User({

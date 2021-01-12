@@ -7,12 +7,15 @@ import Home from "./pages/home";
 //Context
 import { AuthProvider } from "./helper/auth";
 import { DragProvider } from "./helper/drag";
+import { CharacterProvider } from "./helper/character";
 
 function App() {
   return (
     <AuthProvider>
       <DragProvider>
-        <Home />
+        <CharacterProvider>
+          <Home />
+        </CharacterProvider>
       </DragProvider>
     </AuthProvider>
   );

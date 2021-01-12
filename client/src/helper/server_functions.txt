@@ -1,0 +1,35 @@
+const FETCH_ACTIVE_ITEM = gql`
+  query($anchor: ID!, $target: String!) {
+    getActiveItem(anchor: $anchor, target: $target) {
+      name
+      desc
+      path
+      type
+      ability
+      slots
+      mind {
+        cap
+        creation
+        restoration
+        destruction
+      }
+      body {
+        cap
+        vitality
+        defense
+        strength
+        dexterity
+      }
+      soul {
+        luck
+        capacity
+        clarity
+        will
+      }
+      essence {
+        focus
+        value
+      }
+    }
+  }
+`;

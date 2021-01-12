@@ -5,6 +5,17 @@ const enchantment = new Schema({
   value: Number,
 });
 
+const alter = new Schema({
+  default: Number,
+  mod: Number,
+});
+
+const division = new Schema({
+  max: Number,
+  current: Number,
+  division: Number,
+});
+
 const modItem = new Schema({
   item: String,
   enchantments: [enchantment],
@@ -13,6 +24,12 @@ const modItem = new Schema({
 const essence = new Schema({
   focus: String,
   value: Number,
+});
+
+const resistance = new Schema({
+  physical: Number,
+  magical: Number,
+  soul: Number,
 });
 
 const mind = new Schema({
@@ -39,27 +56,28 @@ const soul = new Schema({
   will: Number,
 });
 
-const attribute = new Schema({
-  space: { default: Number, mod: Number },
-  time: { default: Number, mod: Number },
-  death: { default: Number, mod: Number },
-  life: { default: Number, mod: Number },
-  fire: { default: Number, mod: Number },
-  water: { default: Number, mod: Number },
-  earth: { default: Number, mod: Number },
-  air: { default: Number, mod: Number },
+const attributes = new Schema({
+  space: alter,
+  time: alter,
+  death: alter,
+  life: alter,
+  fire: alter,
+  water: alter,
+  earth: alter,
+  air: alter,
 });
 
-const buff = new Schema({
-  regen: { default: Number, mod: Number },
-  dread: { default: Number, mod: Number },
-  poison: { default: Number, mod: Number },
-  scorch: { default: Number, mod: Number },
-  cold: { default: Number, mod: Number },
-  spark: { default: Number, mod: Number },
-  reflect: { default: Number, mod: Number },
-  summon: { default: Number, mod: Number },
-  taunt: { default: Number, mod: Number },
+const buffs = new Schema({
+  regen: alter,
+  dread: alter,
+  poison: alter,
+  scorch: alter,
+  cold: alter,
+  spark: alter,
+  reflect: alter,
+  summon: alter,
+  taunt: alter,
+  flee: alter,
   immortal: Number,
   strong: Number,
   warped: Number,
@@ -70,123 +88,79 @@ const buff = new Schema({
   swift: Number,
 });
 
-const debuff = new Schema({
-  fear: { default: Number, mod: Number },
-  burn: { default: Number, mod: Number },
-  freeze: { default: Number, mod: Number },
-  shock: { default: Number, mod: Number },
-  toxin: { default: Number, mod: Number },
-  decay: { default: Number, mod: Number },
+const debuffs = new Schema({
+  fear: alter,
+  burn: alter,
+  freeze: alter,
+  shock: alter,
+  toxin: alter,
+  decay: alter,
+  bleed: alter,
+  exhaustion: alter,
   explosion: Number,
   paralysis: Number,
   frozen: Number,
   scorched: Number,
+  sleep: Number,
 });
 
 const scale = new Schema({
-  name: String,
-  health: { max: Number, current: Number, division: Number },
-  stamina: { max: Number, current: Number, division: Number },
-  mana: { max: Number, current: Number, division: Number },
-  shield: { max: Number, current: Number, division: Number },
+  health: division,
+  stamina: division,
+  mana: division,
+  shield: division,
   mind: mind,
   body: body,
   soul: soul,
-  attribute: attribute,
-  debuff: debuff,
-  buff: buff,
+  attributes: attributes,
+  debuffs: debuffs,
+  buffs: buffs,
+  scaled: Boolean,
   value: Number,
 });
 
 const modifier = new Schema({
-  space: scale,
-  time: scale,
-  death: scale,
-  life: scale,
-  fire: scale,
-  water: scale,
-  earth: scale,
-  air: scale,
-  creation: scale,
-  destruction: scale,
-  restoration: scale,
-  projection: scale,
-  vitality: scale,
-  defense: scale,
-  strength: scale,
-  dexterity: scale,
-  luck: scale,
-  capacity: scale,
-  clarity: scale,
-  will: scale,
-  regen: scale,
-  dread: scale,
-  poison: scale,
-  scorch: scale,
-  cold: scale,
-  spark: scale,
-  reflect: scale,
-  summon: scale,
-  taunt: scale,
-  immortal: scale,
-  strong: scale,
-  warped: scale,
-  sniper: scale,
-  wellspring: scale,
-  overcharged: scale,
-  scavenger: scale,
-  swift: scale,
-  fear: scale,
-  burn: scale,
-  freeze: scale,
-  shock: scale,
-  toxin: scale,
-  decay: scale,
-  explosion: scale,
-  paralysis: scale,
-  frozen: scale,
-  scorched: scale,
-  damage: scale,
-  health: scale,
-  mana: scale,
-  stamina: scale,
-  shield: scale,
+  target: String,
+  scale: scale,
 });
 
 const effect = new Schema({
   name: String,
   turns: Number,
-  target: Boolean,
-  modifier: modifier,
+  target: Number,
+  modifiers: [modifier],
 });
 
 const perk = new Schema({
   name: String,
   desc: String,
-  attribute: attribute,
-  buff: buff,
-  debuff: debuff,
+  attributes: attributes,
+  buffs: buffs,
+  debuffs: debuffs,
 });
 
 const ability = new Schema({
+  tag: String,
   lvl: Number,
+  target: Number,
   healthCost: Number,
   manaCost: Number,
   staminaCost: Number,
   shieldCost: Number,
-  mind: mind,
-  body: body,
-  soul: soul,
-  repeatable: { default: Number, max: Number, scaling: Boolean },
+  mindReq: Number,
+  bodyReq: Number,
+  soulReq: Number,
+  resistance: resistance,
+  repeatable: division,
   mindRepeat: mind,
   bodyRepeat: body,
   soulRepeat: soul,
   effects: [effect],
   damage: scale,
-  health: scale,
-  mana: scale,
-  stamina: scale,
-  shield: scale,
+  healthGain: scale,
+  manaGain: scale,
+  staminaGain: scale,
+  shieldGain: scale,
 });
 
 const item = new Schema({
@@ -203,13 +177,26 @@ const item = new Schema({
 });
 
 const equipment = new Schema({
-  feet: modItem,
-  arms: modItem,
-  torso: modItem,
+  owner: String,
   head: modItem,
-  hands: modItem,
+  upperBody: modItem,
+  lowerBody: modItem,
+  feet: modItem,
   ringOne: modItem,
   ringTwo: modItem,
+  rightHand: modItem,
+  leftHand: modItem,
+});
+
+const equips = new Schema({
+  head: item,
+  upperBody: item,
+  lowerBody: item,
+  feet: item,
+  ringOne: item,
+  ringTwo: item,
+  rightHand: item,
+  leftHand: item,
 });
 
 const inventory = new Schema({
@@ -235,6 +222,7 @@ const inventory = new Schema({
 const level = new Schema({
   lvl: Number,
   xp: Number,
+  potentialIncrease: Number,
   capIncrease: Number,
   statIncrease: Number,
   cap: Number,
@@ -259,12 +247,17 @@ const enterprise = new Schema({
 });
 
 module.exports = {
+  resistance,
+  enchantment,
+  alter,
+  modItem,
+  essence,
   mind,
   body,
   soul,
-  attribute,
-  buff,
-  debuff,
+  attributes,
+  buffs,
+  debuffs,
   perk,
   scale,
   modifier,
@@ -272,11 +265,11 @@ module.exports = {
   perk,
   ability,
   item,
-  essence,
-  modItem,
   equipment,
+  equips,
   inventory,
   level,
   familiar,
   enterprise,
+  division,
 };

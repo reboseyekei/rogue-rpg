@@ -70,3 +70,22 @@ module.exports.validateCharacterInput = (charName) => {
     valid: Object.keys(errors).length < 1,
   };
 };
+
+module.exports.check = (target) => {
+  if (
+    target === "head" ||
+    target === "upperBody" ||
+    target === "lowerBody" ||
+    target === "feet" ||
+    target === "leftHand" ||
+    target === "rightHand" ||
+    target === "ringOne" ||
+    target === "ringTwo"
+  ) {
+    return 2;
+  } else if (target.substring(0, 4) === "slot") {
+    return 1;
+  } else {
+    return 0;
+  }
+};

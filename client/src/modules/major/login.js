@@ -47,6 +47,8 @@ export default function Login() {
     mutation login($email: String!, $password: String!) {
       login(loginInput: { email: $email, password: $password }) {
         id
+        username
+        vault
         token
       }
     }
@@ -65,7 +67,6 @@ export default function Login() {
   const loginSubmit = (event) => {
     event.preventDefault();
     loginUser();
-    console.log(context);
   };
 
   const login = (
@@ -87,9 +88,8 @@ export default function Login() {
     mutation register($email: String!, $username: String!, $password: String!, $confirmPassword: String!) {
       register(registerInput: { email: $email, username: $username, password: $password, confirmPassword: $confirmPassword }) {
         id
-        email
         username
-        createdAt
+        vault
         token
       }
     }
@@ -109,7 +109,6 @@ export default function Login() {
   const registerSubmit = (event) => {
     event.preventDefault();
     addUser();
-    console.log(context.user);
   };
 
   const register = (
@@ -121,10 +120,11 @@ export default function Login() {
         <label htmlFor="username">Username</label>
         <input className={registerErrors.username ? "error" : ""} type="text" id="username" name="username" onChange={handleRegisterChange} />
         <p>{registerErrors.username}</p>
-        <label htmlFor="username">Password</label>
+        <label htmlFor="password">Password</label>
         <input className={registerErrors.password ? "error" : ""} type="text" id="password" name="password" onChange={handleRegisterChange} />
-        <p>{registerErrors.password}</p>
-        <label htmlFor="username">Confirm password</label>
+        <label htmlFor="confirmPassword" style={{ marginTop: "2px" }}>
+          Confirm password
+        </label>
         <input
           className={registerErrors.confirmPassword ? "error" : ""}
           type="text"
@@ -132,7 +132,7 @@ export default function Login() {
           name="confirmPassword"
           onChange={handleRegisterChange}
         />
-        <p>{registerErrors.confirmPassword}</p>
+        <p style={{ height: "30px" }}>{registerErrors.confirmPassword || registerErrors.password}</p>
         <button className="submit-button" style={{ borderColor: registerLoad ? "#ab9d48" : "#bbb" }}>
           {registerLoad ? <img src={Load} alt="loading" style={{ marginTop: "-10px" }} /> : "register"}
         </button>

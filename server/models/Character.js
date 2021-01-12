@@ -1,5 +1,5 @@
 const { model, Schema } = require("mongoose");
-const { attribute, buff, debuff, mind, body, soul, level, inventory, equipment } = require("./_Objects");
+const { attributes, buffs, debuffs, mind, body, soul, level, division } = require("./_Objects");
 
 const characterSchema = new Schema({
   owner: String,
@@ -8,21 +8,21 @@ const characterSchema = new Schema({
   level: level,
   alignment: Number,
   slots: Number,
-  attribute: attribute,
-  buff: buff,
-  debuff: debuff,
-  abilities: [String],
+  attributes: attributes,
+  buffs: buffs,
+  debuffs: debuffs,
+  abilitiesInv: String,
   cooldown: [Number],
   mind: mind,
   body: body,
   soul: soul,
-  shield: Number,
-  health: Number,
-  mana: Number,
-  stamina: Number,
+  shield: division,
+  health: division,
+  mana: division,
+  stamina: division,
   perks: [String],
   effects: [String],
-  equipment: equipment,
+  equipment: String,
   inventory: String,
   familiar: String,
   skin: String,

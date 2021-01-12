@@ -25,15 +25,15 @@ function dragReducer(state, action) {
     case "START":
       return {
         ...state,
-        dragging: action.payload.firstItem,
-        draggedFrom: action.payload.firstInventory,
+        dragging: action.payload.firstTarget,
+        draggedFrom: action.payload.firstAnchor,
         isDragging: true,
       };
     case "OVER":
       return {
         ...state,
-        draggedOn: action.payload.secondItem,
-        draggedTo: action.payload.secondInventory,
+        draggedOn: action.payload.secondTarget,
+        draggedTo: action.payload.secondAnchor,
       };
     case "DROP":
       return {
@@ -86,7 +86,17 @@ function DragProvider(props) {
 
   return (
     <DragContext.Provider
-      value={{ dragging: state.dragging, draggedFrom: state.draggedFrom, draggedTo: state.draggedTo, draggedOn: state.draggedOn, start, over, drop, leave }}
+      value={{
+        dragging: state.dragging,
+        draggedFrom: state.draggedFrom,
+        draggedTo: state.draggedTo,
+        draggedOn: state.draggedOn,
+        isDragging: state.isDragging,
+        start,
+        over,
+        drop,
+        leave,
+      }}
       {...props}
     />
   );

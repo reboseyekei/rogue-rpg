@@ -5,7 +5,7 @@ const effectSchema = new Schema({
   name: String,
   target: Number,
   turns: Number,
-  modifier: modifier,
+  modifiers: [modifier],
 });
 
 module.exports = model("effect", effectSchema);

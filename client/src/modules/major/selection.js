@@ -43,7 +43,7 @@ export default function Selection() {
     <div>
       <Grid container>
         <Grid item xs={8} md={11}>
-          <h1 className="title">PICK A CHARACTER</h1>
+          <h1 className="title">ROGUE RPG</h1>
         </Grid>
         <Grid item xs={4} md={1}>
           <button className="base-button" onClick={context.logout} style={{ fontFamily: "Piazzolla", height: "100%", marginRight: "auto", float: "right" }}>
@@ -52,31 +52,29 @@ export default function Selection() {
         </Grid>
       </Grid>
       <section className="basic-grid">
-        {loading ? (
-          <h1 style={{ fontFamily: "Piazzola", textAlign: "center" }}>Loading Characters...</h1>
-        ) : (
-          data.getCharacters &&
-          data.getCharacters.map((character) => (
-            <div
-              className="card"
-              key={character.id}
-              onClick={() => {
-                context.setCharacter({ id: character.id, skin: character.skin });
-              }}
-            >
-              <img
-                src={require(`../../assets/skins/${character.skin}.jpg`)}
-                style={{ width: "200px", height: "200px" }}
-                alt={`character graphic for ${character.skin}`}
-              />
-              <h5 style={{ fontFamily: "Piazzolla", marginBottom: "0" }}>{character.name}</h5>
-              <div style={{ marginTop: "0", fontFamily: "Press Start 2P", fontSize: ".25em", textAlign: "center" }}>
-                <p style={{ height: "30px" }}>{`${character.place}`}</p>
-                <p>{`level: ${character.level.lvl}`}</p>
+        {loading
+          ? ""
+          : data.getCharacters &&
+            data.getCharacters.map((character) => (
+              <div
+                className="card"
+                key={character.id}
+                onClick={() => {
+                  context.setCharacter({ id: character.id, skin: character.skin });
+                }}
+              >
+                <img
+                  src={require(`../../assets/skins/${character.skin}.jpg`)}
+                  style={{ width: "200px", height: "200px" }}
+                  alt={`character graphic for ${character.skin}`}
+                />
+                <h5 style={{ fontFamily: "Piazzolla", marginBottom: "0" }}>{character.name}</h5>
+                <div style={{ marginTop: "0", fontFamily: "Press Start 2P", fontSize: ".25em", textAlign: "center" }}>
+                  <p style={{ height: "30px" }}>{`${character.place}`}</p>
+                  <p>{`level: ${character.level.lvl}`}</p>
+                </div>
               </div>
-            </div>
-          ))
-        )}
+            ))}
         <div className="card" key={"plus"} onClick={handleClickOpen}>
           <img src={plus} style={{ width: "200px", height: "200px" }} alt="create a new character" />
           <h5 style={{ fontFamily: "Piazzolla", marginBottom: "0" }}>New Character</h5>

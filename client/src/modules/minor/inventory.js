@@ -1,55 +1,68 @@
 //General
-import React, { useContext, useState } from "react";
+import React, { useContext, memo } from "react";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import { v4 as uuidv4 } from "uuid";
 
 //Minor Modules
 import Item from "./item";
 
 //Contexts
 import { DragContext } from "../../helper/drag";
+import { CharacterContext } from "../../helper/character";
 
 //Styles
 import "../styles/base.css";
 
-export default function Inventory({ inventoryId }) {
+function Inventory({ inventoryId, refreshEquips }) {
   //General
   const drag = useContext(DragContext);
+  const character = useContext(CharacterContext);
 
   //Get Inventories
-  const { loading, data, refetch } = useQuery(FETCH_INVENTORY, { variables: { inventoryId }, pollInterval: 100 });
+  const { loading, data, refetch } = useQuery(FETCH_INVENTORY, { variables: { inventoryId }, pollInterval: 200 });
 
   //Switch Items
-  const [switchItems, { loading: switchLoad }] = useMutation(SWITCH_ITEMS, {
-    variables: { firstInventory: drag.draggedFrom, secondInventory: drag.draggedTo, firstItem: drag.dragging, secondItem: drag.draggedOn },
+  const [switchItems] = useMutation(SWITCH_ITEMS, {
+    variables: { firstAnchor: drag.draggedFrom, secondAnchor: drag.draggedTo, firstTarget: drag.dragging, secondTarget: drag.draggedOn },
   });
 
   //Dragging
-  const startDrag = (event, target) => {
-    event.preventDefault();
-    if (target) {
-      return drag.start({ firstInventory: inventoryId, firstItem: target });
-    } else {
-      return;
-    }
+  const dragStart = (event, target) => {
+    let img = new Image();
+    img.src = "";
+    event.dataTransfer.setDragImage(img, 0, 0);
+    drag.start({ firstAnchor: inventoryId, firstTarget: target });
   };
 
-  const endDrag = (event, target) => {
+  const dragOver = (event, target) => {
     event.preventDefault();
-    if (target) {
-      drag.over({ secondInventory: inventoryId, secondItem: target });
-    } else {
-      return;
-    }
+    drag.over({ secondAnchor: inventoryId, secondTarget: target });
   };
 
   const finishDrag = async () => {
-    if (drag.draggedTo && drag.draggedOn) {
+    if (drag.draggedFrom && drag.draggedOn) {
+      if (drag.dragging.substring(0, 4) === "slot") {
+        let tempAbilities = character.abilities;
+        tempAbilities[drag.dragging] = null;
+        character.use(tempAbilities);
+      }
       switchItems();
+      refetch();
     }
     drag.drop();
-    refetch();
+  };
+
+  const backgroundCalculator = (slot) => {
+    if (drag.isDragging) {
+      if (slot === drag.dragging && inventoryId === drag.draggedFrom) {
+        return "#000";
+      }
+      if (slot === drag.draggedOn && inventoryId === drag.draggedTo) {
+        return "#111";
+      }
+    } else {
+      return "#333";
+    }
   };
 
   if (!loading) {
@@ -58,28 +71,20 @@ export default function Inventory({ inventoryId }) {
 
     return (
       <div className="inventory">
-        {slots.map((slot, index) => (
+        {slots.map((slot) => (
           <li
-            draggable
+            style={{ backgroundColor: backgroundCalculator(slot), cursor: inv[slot].item ? "grab" : "default" }}
             className="slot"
-            key={`${uuidv4()}`}
-            onDragStart={(e) => startDrag(e, slot)}
-            onDragOver={(e) => endDrag(e, slot)}
-            onDrop={drag.leave}
-            onDragLeave={finishDrag}
+            draggable={inv[slot].item ? true : false}
+            key={`${inventoryId}-${slot}`}
+            onDragStart={(e) => dragStart(e, slot)}
+            onDragOver={(e) => dragOver(e, slot)}
+            onDragLeave={drag.leave}
+            onDrop={finishDrag}
           >
-            {<Item itemId={inv[slot].item} />}
+            {inv[slot].item ? <Item itemId={inv[slot].item} /> : null}
           </li>
         ))}
-        <li
-         className="slot"
-         onDragStart={(e) => startDrag(e, "one")}
-         onDragOver={(e) => endDrag(e, "one")}
-         onDrop={drag.leave}
-         onDragLeave={finishDrag}
-         >
-          <Item itemId={inv["one"].item} />
-        </li>
       </div>
     );
   } else {
@@ -87,9 +92,11 @@ export default function Inventory({ inventoryId }) {
   }
 }
 
+export default memo(Inventory);
+
 const SWITCH_ITEMS = gql`
-  mutation switchItems($firstInventory: ID!, $secondInventory: ID!, $firstItem: String!, $secondItem: String!) {
-    switchItems(switchItemsInput: { firstInventory: $firstInventory, secondInventory: $secondInventory, firstItem: $firstItem, secondItem: $secondItem })
+  mutation switchItems($firstAnchor: ID!, $secondAnchor: ID!, $firstTarget: String!, $secondTarget: String!) {
+    switchItems(switchItemsInput: { firstAnchor: $firstAnchor, secondAnchor: $secondAnchor, firstTarget: $firstTarget, secondTarget: $secondTarget })
   }
 `;
 

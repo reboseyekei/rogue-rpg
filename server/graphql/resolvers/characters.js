@@ -8,6 +8,11 @@ const User = require("../../models/User");
 const Character = require("../../models/Character");
 const Level = require("../../models/Level");
 const Inventory = require("../../models/Inventory");
+const Equipment = require("../../models/Equipment");
+const Attributes = require("../../models/Attribute");
+const Debuffs = require("../../models/Debuffs");
+const Buffs = require("../../models/Buffs");
+const AbilitiesInv = require("../../models/AbilitiesInv");
 
 const { validateCharacterInput } = require("../../util/validators");
 const checkAuth = require("../../util/checkAuth");
@@ -68,6 +73,8 @@ module.exports = {
 
       const characterId = mongoose.Types.ObjectId();
       const inventoryId = mongoose.Types.ObjectId();
+      const equipmentId = mongoose.Types.ObjectId();
+      const abilitiesInvId = mongoose.Types.ObjectId();
 
       user.characters.push(characterId);
 
@@ -75,15 +82,20 @@ module.exports = {
       const newLevel = new Level({
         lvl: 0,
         xp: 0,
-        capIncrease: 5,
-        statIncrease: 2,
-        cap: 0,
-        stat: 10,
+        potentialIncrease: 1,
+        capIncrease: 3,
+        statIncrease: 6,
+        cap: 5,
+        stat: 5,
+        health: 4,
+        mana: 2,
+        stamina: 2,
+        shield: 0,
         bonus: [],
         perks: [],
       });
 
-      const newAttributes = {
+      const newAttributes = new Attributes({
         space: { default: 0, mod: 0 },
         time: { default: 0, mod: 0 },
         death: { default: 0, mod: 0 },
@@ -92,9 +104,9 @@ module.exports = {
         water: { default: 0, mod: 0 },
         earth: { default: 0, mod: 0 },
         air: { default: 0, mod: 0 },
-      };
+      });
 
-      const newBuffs = {
+      const newBuffs = new Buffs({
         regen: { default: 0, mod: 0 },
         dread: { default: 0, mod: 0 },
         poison: { default: 0, mod: 0 },
@@ -104,6 +116,7 @@ module.exports = {
         reflect: { default: 0, mod: 0 },
         summon: { default: 0, mod: 0 },
         taunt: { default: 0, mod: 0 },
+        flee: { default: 0, mod: 0 },
         immortal: 0,
         strong: 0,
         warped: 0,
@@ -112,23 +125,26 @@ module.exports = {
         overcharged: 0,
         scavenger: 0,
         swift: 0,
-      };
+      });
 
-      const newDebuff = {
+      const newDebuffs = new Debuffs({
         fear: { default: 0, mod: 0 },
         burn: { default: 0, mod: 0 },
         freeze: { default: 0, mod: 0 },
         shock: { default: 0, mod: 0 },
         toxin: { default: 0, mod: 0 },
         decay: { default: 0, mod: 0 },
+        bleed: { default: 0, mod: 0 },
+        exhaustion: { default: 0, mod: 0 },
         explosion: 0,
         paralysis: 0,
         frozen: 0,
         scorched: 0,
-      };
+        sleep: 0,
+      });
 
       const newMind = {
-        cap: 10,
+        cap: 0,
         creation: 0,
         destruction: 0,
         restoration: 0,
@@ -136,7 +152,7 @@ module.exports = {
       };
 
       const newBody = {
-        cap: 10,
+        cap: 0,
         vitality: 0,
         defense: 0,
         strength: 0,
@@ -144,57 +160,114 @@ module.exports = {
       };
 
       const newSoul = {
-        cap: 10,
+        cap: 0,
         luck: 0,
         capacity: 0,
         clarity: 0,
         will: 0,
       };
 
-      const newEquipment = {
-        feet: { item: null, enchantments: [] },
-        arms: { item: null, enchantments: [] },
-        torso: { item: null, enchantments: [] },
+      //Health, shield, mana, and stamina.
+      //Max indicates max, current indicates current health, etc(if you've taken damage it will be less than max)
+      //Division indicates regen
+      const newHealth = {
+        max: 40,
+        current: 40,
+        division: 2,
+      };
+
+      const newShield = {
+        max: 0,
+        current: 0,
+        division: 0,
+      };
+
+      const newMana = {
+        max: 20,
+        current: 20,
+        division: 4,
+      };
+
+      const newStamina = {
+        max: 20,
+        current: 20,
+        division: 4,
+      };
+
+      const newEquipment = new Equipment({
+        _id: equipmentId,
+        owner: characterId,
         head: { item: null, enchantments: [] },
-        hands: { item: null, enchantments: [] },
+        upperBody: { item: null, enchantments: [] },
+        lowerBody: { item: null, enchantments: [] },
+        feet: { item: null, enchantments: [] },
         ringOne: { item: null, enchantments: [] },
         ringTwo: { item: null, enchantments: [] },
-      };
+        rightHand: { item: null, enchantments: [] },
+        leftHand: { item: null, enchantments: [] },
+      });
 
       const newInventory = new Inventory({
         _id: inventoryId,
         owner: characterId,
-        one: { item: "5f8f4a0fb83a0b8e2b7fb9ee", enchantments: [] },
-        two: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        three: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        four: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        five: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        six: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        seven: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        eight: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        nine: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        ten: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        eleven: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        twelve: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        thirteen: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        fourteen: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        fifteen: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
-        sixteen: { item: "5f8f4afab42a919537d55e09", enchantments: [] },
+        one: { item: null, enchantments: [] },
+        two: { item: null, enchantments: [] },
+        three: { item: null, enchantments: [] },
+        four: { item: null, enchantments: [] },
+        five: { item: null, enchantments: [] },
+        six: { item: null, enchantments: [] },
+        seven: { item: null, enchantments: [] },
+        eight: { item: null, enchantments: [] },
+        nine: { item: null, enchantments: [] },
+        ten: { item: null, enchantments: [] },
+        eleven: { item: null, enchantments: [] },
+        twelve: { item: null, enchantments: [] },
+        thirteen: { item: null, enchantments: [] },
+        fourteen: { item: null, enchantments: [] },
+        fifteen: { item: null, enchantments: [] },
       });
-      //ability is placeholder for the time being
 
-      let ability = "";
+      //Struggle is set as the default ability
+      let defaultAbility = "5ff780e201734201adfea07a";
+
+      //TODO Update this later to allow for more classes, probably using strings instead of ints
       let skin = "";
+      let chosenAbility = "";
       if (abilityChoice === 1) {
         skin = "warrior";
-        ability = "strike";
+        chosenAbility = "5ff7830701734201adfeaf95";
       } else if (abilityChoice === 2) {
         skin = "rogue";
-        ability = "flee";
+        chosenAbility = "5ff783dc01734201adfeb582";
       } else if (abilityChoice === 3) {
         skin = "mage";
-        ability = "fireball";
+        chosenAbility = "5ff7822101734201adfea93f";
       }
+
+      const newAbilitiesInv = new AbilitiesInv({
+        _id: abilitiesInvId,
+        owner: characterId,
+        slotOne: { item: defaultAbility, enchantments: [] },
+        slotTwo: { item: chosenAbility, enchantments: [] },
+        slotThree: { item: null, enchantments: [] },
+        slotFour: { item: null, enchantments: [] },
+        slotFive: { item: null, enchantments: [] },
+        slotSix: { item: null, enchantments: [] },
+        slotSeven: { item: null, enchantments: [] },
+        slotEight: { item: null, enchantments: [] },
+        slotNine: { item: null, enchantments: [] },
+        slotTen: { item: null, enchantments: [] },
+        slotEleven: { item: null, enchantments: [] },
+        slotTwelve: { item: null, enchantments: [] },
+        slotThirteen: { item: null, enchantments: [] },
+        slotFourteen: { item: null, enchantments: [] },
+        slotFifteen: { item: null, enchantments: [] },
+        slotSixteen: { item: null, enchantments: [] },
+        slotSeventeen: { item: null, enchantments: [] },
+        slotEighteen: { item: null, enchantments: [] },
+        slotNineteen: { item: null, enchantments: [] },
+        slotTwenty: { item: null, enchantments: [] },
+      });
 
       /*
       TODO: 
@@ -211,19 +284,19 @@ module.exports = {
         slots: 3,
         attributes: newAttributes,
         buffs: newBuffs,
-        debuffs: newDebuff,
-        abilities: [ability],
-        cooldowns: [0, 0, 0],
+        debuffs: newDebuffs,
+        abilitiesInv: abilitiesInvId,
+        cooldowns: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         mind: newMind,
         body: newBody,
         soul: newSoul,
-        shield: 10,
-        health: 20,
-        mana: 20,
-        stamina: 10,
+        shield: newShield,
+        health: newHealth,
+        mana: newMana,
+        stamina: newStamina,
         perks: [],
         effects: [],
-        equipment: newEquipment,
+        equipment: equipmentId,
         inventory: inventoryId,
         familiar: "",
         skin: skin,
@@ -231,10 +304,119 @@ module.exports = {
       });
 
       await user.save();
+      await newEquipment.save();
       await newInventory.save();
+      await newAbilitiesInv.save();
       const character = await newCharacter.save();
 
       return character;
+    },
+    async updateCharacterStats(
+      _,
+      {
+        updateCharacterStatsInput: {
+          characterId,
+          capUsed,
+          statUsed,
+          mindCap,
+          bodyCap,
+          soulCap,
+          creation,
+          destruction,
+          restoration,
+          projection,
+          vitality,
+          defense,
+          strength,
+          dexterity,
+          luck,
+          capacity,
+          clarity,
+          will,
+        },
+      }
+    ) {
+      try {
+        if (!characterId.match(/^[0-9a-fA-F]{24}$/)) {
+          throw new Error("Invalid ID");
+        }
+        const character = await Character.findById(characterId);
+        if (character) {
+          //Adding up the values of what was sent to the server for math
+          let totalMind = creation + destruction + restoration + projection;
+          let totalBody = vitality + defense + strength + dexterity;
+          let totalSoul = luck + capacity + clarity + will;
+          //
+          let totalStat = totalMind + totalBody + totalSoul;
+          let totalCap = mindCap + bodyCap + soulCap;
+
+          //Adding up the values of what was sent and what is currently on the server for math
+          let fullMind = totalMind + character.mind.creation + character.mind.destruction + character.mind.restoration + character.mind.projection;
+          let fullBody = totalBody + character.body.vitality + character.body.defense + character.body.strength + character.body.dexterity;
+          let fullSoul = totalSoul + character.soul.luck + character.soul.capacity + character.soul.clarity + character.soul.will;
+
+          if (capUsed <= character.level.cap && statUsed <= character.level.stat && totalStat <= character.level.stat && totalCap <= character.level.cap) {
+            //Evaluating that the character's stats fit inside the character's cap limit
+            if (mindCap + character.mind.cap >= fullMind && bodyCap + character.body.cap >= fullBody && soulCap + character.soul.cap >= fullSoul) {
+              //Checking for mismatches in the total stat/cap points used. If there is a mismatch its likely an exploit
+              if (totalStat === statUsed && totalCap === capUsed) {
+                //removing used stat/cap points
+                character.level.cap -= capUsed;
+                character.level.stat -= statUsed;
+
+                //saving changes made in mind,body, and soul categories
+                //mind
+                character.mind.cap += mindCap;
+                character.mind.creation += creation;
+                character.mind.destruction += destruction;
+                character.mind.restoration += restoration;
+                character.mind.projection += projection;
+
+                //body
+                character.body.cap += bodyCap;
+                character.body.vitality += vitality;
+                character.body.defense += defense;
+                character.body.strength += strength;
+                character.body.dexterity += dexterity;
+
+                //soul
+                character.soul.cap += soulCap;
+                character.soul.luck += luck;
+                character.soul.capacity += capacity;
+                character.soul.clarity += clarity;
+                character.soul.will += will;
+
+                let totalHealth = bodyCap * 2 + vitality * 4;
+                let totalHealthRegen = vitality + defense;
+                let totalMana = mindCap * 2 + capacity * 4 + clarity * 2;
+                let totalManaRegen = clarity * 2 + capacity * 1;
+                let totalStamina = strength * 4 + dexterity * 2;
+                let totalStaminaRegen = strength * 1 + dexterity * 2;
+                let totalShield = projection * 5;
+                let totalShieldRegen = projection * 1;
+
+                character.health.current += totalHealth;
+                character.mana.current += totalMana;
+                character.stamina.current += totalStamina;
+                character.shield.current += totalShield;
+
+                await character.save();
+                return character;
+              } else {
+                throw new Error("Exploit likely detected, invalid request");
+              }
+            } else {
+              throw new Error("Invalid stat point placement: not enough cap, etc");
+            }
+          } else {
+            throw new Error("Insufficient level points");
+          }
+        } else {
+          throw new Error("Character not found");
+        }
+      } catch (err) {
+        throw new Error(err);
+      }
     },
     async deleteCharacter(_, { characterId }) {
       try {
