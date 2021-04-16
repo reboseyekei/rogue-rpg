@@ -4,8 +4,23 @@ const inventoriesResolvers = require("./inventories");
 const equipmentsResolvers = require("./equipments");
 const itemsResolvers = require("./items");
 const abilitiesResolvers = require("./abilities");
+const dungeonResolvers = require("./dungeon");
+const locationsResolvers = require("./locations");
+const adminsResolvers = require("./admins");
 
 module.exports = {
+  Place: {
+    __resolveType(obj, context, info) {
+        if (obj.chaos) {
+            return 'Dungeon';
+        } 
+        if(obj.desc) {
+            return 'Location';
+        }
+
+        return null;
+    },
+  },
   Query: {
     ...usersResolvers.Query,
     ...charactersResolvers.Query,
@@ -13,6 +28,9 @@ module.exports = {
     ...equipmentsResolvers.Query,
     ...itemsResolvers.Query,
     ...abilitiesResolvers.Query,
+    ...dungeonResolvers.Query,
+    ...adminsResolvers.Query,
+    ...locationsResolvers.Query,
   },
   Mutation: {
     ...usersResolvers.Mutation,
@@ -21,5 +39,11 @@ module.exports = {
     ...equipmentsResolvers.Mutation,
     ...itemsResolvers.Mutation,
     ...abilitiesResolvers.Mutation,
+    ...dungeonResolvers.Mutation,
+    ...adminsResolvers.Mutation,
+    ...locationsResolvers.Mutation,
   },
+  Subscription: {
+    ...locationsResolvers.Subscription,
+  }
 };

@@ -227,6 +227,10 @@ const level = new Schema({
   statIncrease: Number,
   cap: Number,
   stat: Number,
+  health: Number,
+  mana: Number,
+  stamina: Number,
+  shield: Number,
   bonus: [Number],
   perks: [String],
 });
@@ -245,6 +249,44 @@ const enterprise = new Schema({
   level: Number,
   cost: Number,
 });
+
+const monsterTemplate = new Schema({
+  name: String,
+  type: String,
+  alignmentRange: Number,
+  humanity: Number,
+  rarity: Number,
+  environments: [String],
+  level: level,
+  attributes: attributes,
+  buffs: buffs,
+  debuffs: debuffs,
+  slots: Number,
+  abilities: [String],
+  cooldown: [Number],
+  mind: mind,
+  body: body,
+  soul: soul,
+  defRes: Number,
+  debuffRes: Number,
+  health: division,
+  mana: division,
+  stamina: division,
+  shield: division,
+  perks: [String],
+  effects: [effect],
+  canEquip: Number,
+  equipment: [String],
+  items: [String],
+  skins: [String],
+  lines: [[String]]
+})
+
+const room = new Schema({
+  lifespan: Number,
+  environment: String,
+  template: monsterTemplate,
+})
 
 module.exports = {
   resistance,
@@ -272,4 +314,6 @@ module.exports = {
   familiar,
   enterprise,
   division,
+  monsterTemplate,
+  room,
 };

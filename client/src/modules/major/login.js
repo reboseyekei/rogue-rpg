@@ -48,6 +48,10 @@ export default function Login() {
       login(loginInput: { email: $email, password: $password }) {
         id
         username
+        purity
+        wisdom
+        locations
+        spirits
         vault
         token
       }
@@ -89,6 +93,10 @@ export default function Login() {
       register(registerInput: { email: $email, username: $username, password: $password, confirmPassword: $confirmPassword }) {
         id
         username
+        purity
+        wisdom
+        locations
+        spirits
         vault
         token
       }
@@ -108,6 +116,7 @@ export default function Login() {
 
   const registerSubmit = (event) => {
     event.preventDefault();
+    console.log(registerValues);
     addUser();
   };
 

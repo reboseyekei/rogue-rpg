@@ -1,31 +1,41 @@
 const { model, Schema } = require("mongoose");
-const { attributes, buffs, debuffs, mind, body, soul, level, division } = require("./_Objects");
+const { attributes, buffs, debuffs, mind, body, soul, level, division, effect} = require("./_Objects");
 
 const characterSchema = new Schema({
   owner: String,
   name: String,
+  spirit: String,
   place: String,
+  party: String,
   level: level,
+  cap: Number,
+  tags: [String],
+  titles: [String],
   alignment: Number,
-  slots: Number,
+  humanity: Number,
   attributes: attributes,
   buffs: buffs,
   debuffs: debuffs,
+  slots: Number,
   abilitiesInv: String,
-  cooldown: [Number],
+  cooldowns: [Number],
   mind: mind,
   body: body,
   soul: soul,
-  shield: division,
   health: division,
   mana: division,
   stamina: division,
+  shield: division,
+  defRes: Number,
+  debuffRes: Number,
   perks: [String],
-  effects: [String],
+  effects: [effect],
+  canEquip: Number,
   equipment: String,
   inventory: String,
   familiar: String,
-  skin: String,
+  skins: [[String]],
+  lines: [[String]],
 });
 
 module.exports = model("Character", characterSchema);

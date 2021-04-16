@@ -611,13 +611,15 @@ function parseAlter(anchor, anchorName, target) {
   //If an alter has the default value and the mod value,
   //then that means that they should be differentiated in scaling
   //If there is only a default value, then default and mod alter values should not be differentiated
-  if (anchor) {
-    if ((anchor.default && anchor.mod) || anchor.mod === 0) {
+  let value = anchor[anchorName][target]
+  if (value) {
+    if ((value.default && value.mod) || value.mod === 0) {
+      alter=[];
       alter.push(`${anchorName}.${target}.default`);
       alter.push(`${anchorName}.${target}.mod`);
     }
-    if (anchor.default && !anchor.mod) {
-      alter.push(`${anchorName}.${target}.default`);
+    if (value.default && !value.mod) {
+      alter= `${anchorName}.${target}.default`;
     }
   }
   return alter;
@@ -626,15 +628,15 @@ function parseAlter(anchor, anchorName, target) {
 function parseAttributes(anchor) {
   let attributes = [];
 
-  if (anchor) {
-    if (anchor.space) attributes = attributes.concat(parseAlter(anchor, "attributes", "space"));
-    if (anchor.time) attributes = attributes.concat(parseAlter(anchor, "attributes", "time"));
-    if (anchor.death) attributes = attributes.concat(parseAlter(anchor, "attributes", "death"));
-    if (anchor.life) attributes = attributes.concat(parseAlter(anchor, "attributes", "life"));
-    if (anchor.fire) attributes = attributes.concat(parseAlter(anchor, "attributes", "fire"));
-    if (anchor.water) attributes = attributes.concat(parseAlter(anchor, "attributes", "water"));
-    if (anchor.earth) attributes = attributes.concat(parseAlter(anchor, "attributes", "earth"));
-    if (anchor.air) attributes = attributes.concat(parseAlter(anchor, "attributes", "air"));
+  if (anchor.attributes) {
+    if (anchor.attributes.space) attributes = attributes.concat(parseAlter(anchor, "attributes", "space"));
+    if (anchor.attributes.time) attributes = attributes.concat(parseAlter(anchor, "attributes", "time"));
+    if (anchor.attributes.death) attributes = attributes.concat(parseAlter(anchor, "attributes", "death"));
+    if (anchor.attributes.life) attributes = attributes.concat(parseAlter(anchor, "attributes", "life"));
+    if (anchor.attributes.fire) attributes = attributes.concat(parseAlter(anchor, "attributes", "fire"));
+    if (anchor.attributes.water) attributes = attributes.concat(parseAlter(anchor, "attributes", "water"));
+    if (anchor.attributes.earth) attributes = attributes.concat(parseAlter(anchor, "attributes", "earth"));
+    if (anchor.attributes.air) attributes = attributes.concat(parseAlter(anchor, "attributes", "air"));
   }
 
   return attributes;
@@ -642,27 +644,27 @@ function parseAttributes(anchor) {
 
 function parseBuffs(anchor) {
   let buffs = [];
-
-  if (anchor) {
+  
+  if (anchor.buffs) {
     //Value buffs require parseAlter
-    if (anchor.regen) buffs = buffs.concat(parseAlter(anchor, "buffs", "regen"));
-    if (anchor.dread) buffs = buffs.concat(parseAlter(anchor, "buffs", "dread"));
-    if (anchor.poison) buffs = buffs.concat(parseAlter(anchor, "buffs", "poison"));
-    if (anchor.scorch) buffs = buffs.concat(parseAlter(anchor, "buffs", "scorch"));
-    if (anchor.cold) buffs = buffs.concat(parseAlter(anchor, "buffs", "cold"));
-    if (anchor.spark) buffs = buffs.concat(parseAlter(anchor, "buffs", "spark"));
-    if (anchor.reflect) buffs = buffs.concat(parseAlter(anchor, "buffs", "reflect"));
-    if (anchor.taunt) buffs = buffs.concat(parseAlter(anchor, "buffs", "taunt"));
-    if (anchor.flee) buffs = buffs.concat(parseAlter(anchor, "buffs", "flee"));
+    if (anchor.buffs.regen) buffs = buffs.concat(parseAlter(anchor, "buffs", "regen"));
+    if (anchor.buffs.dread) buffs = buffs.concat(parseAlter(anchor, "buffs", "dread"));
+    if (anchor.buffs.poison) buffs = buffs.concat(parseAlter(anchor, "buffs", "poison"));
+    if (anchor.buffs.scorch) buffs = buffs.concat(parseAlter(anchor, "buffs", "scorch"));
+    if (anchor.buffs.cold) buffs = buffs.concat(parseAlter(anchor, "buffs", "cold"));
+    if (anchor.buffs.spark) buffs = buffs.concat(parseAlter(anchor, "buffs", "spark"));
+    if (anchor.buffs.reflect) buffs = buffs.concat(parseAlter(anchor, "buffs", "reflect"));
+    if (anchor.buffs.taunt) buffs = buffs.concat(parseAlter(anchor, "buffs", "taunt"));
+    if (anchor.buffs.flee) buffs = buffs.concat(parseAlter(anchor, "buffs", "flee"));
 
     //Timed buffs are just ints
-    anchor.immortal && buffs.push(`buffs.immortal`);
-    anchor.strong && buffs.push(`buffs.strong`);
-    anchor.warped && buffs.push(`buffs.warped`);
-    anchor.sniper && buffs.push(`buffs.sniper`);
-    anchor.overcharged && buffs.push(`buffs.overcharged`);
-    anchor.scavenger && buffs.push(`buffs.scavenger`);
-    anchor.swift && buffs.push(`buffs.swift`);
+    anchor.buffs.immortal && buffs.push(`buffs.immortal`);
+    anchor.buffs.strong && buffs.push(`buffs.strong`);
+    anchor.buffs.warped && buffs.push(`buffs.warped`);
+    anchor.buffs.sniper && buffs.push(`buffs.sniper`);
+    anchor.buffs.overcharged && buffs.push(`buffs.overcharged`);
+    anchor.buffs.scavenger && buffs.push(`buffs.scavenger`);
+    anchor.buffs.swift && buffs.push(`buffs.swift`);
   }
 
   return buffs;
@@ -671,23 +673,23 @@ function parseBuffs(anchor) {
 function parseDebuffs(anchor) {
   let debuffs = [];
 
-  if (anchor) {
+  if (anchor.debuffs) {
     //Value debuffs require parseAlter
-    if (anchor.fear) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "fear"));
-    if (anchor.burn) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "burn"));
-    if (anchor.freeze) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "freeze"));
-    if (anchor.shock) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "shock"));
-    if (anchor.toxin) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "toxin"));
-    if (anchor.decay) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "decay"));
-    if (anchor.bleed) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "bleed"));
-    if (anchor.exhaustion) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "exhaustion"));
+    if (anchor.debuffs.fear) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "fear"));
+    if (anchor.debuffs.burn) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "burn"));
+    if (anchor.debuffs.freeze) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "freeze"));
+    if (anchor.debuffs.shock) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "shock"));
+    if (anchor.debuffs.toxin) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "toxin"));
+    if (anchor.debuffs.decay) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "decay"));
+    if (anchor.debuffs.bleed) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "bleed"));
+    if (anchor.debuffs.exhaustion) debuffs = debuffs.concat(parseAlter(anchor, "debuffs", "exhaustion"));
 
     //Timed debuffs are just ints
-    anchor.exploison && debuffs.push(`debuffs.exploison`);
-    anchor.paralysis && debuffs.push(`debuffs.paralysis`);
-    anchor.frozen && debuffs.push(`debuffs.frozen`);
-    anchor.scorched && debuffs.push(`debuffs.scorched`);
-    anchor.sleep && debuffs.push(`debuffs.sleep`);
+    anchor.debuffs.exploison && debuffs.push(`debuffs.exploison`);
+    anchor.debuffs.paralysis && debuffs.push(`debuffs.paralysis`);
+    anchor.debuffs.frozen && debuffs.push(`debuffs.frozen`);
+    anchor.debuffs.scorched && debuffs.push(`debuffs.scorched`);
+    anchor.debuffs.sleep && debuffs.push(`debuffs.sleep`);
   }
 
   return debuffs;
@@ -704,9 +706,9 @@ function parseScalers(anchor) {
   if (anchor.soul) scalers = scalers.concat(parseCategory(anchor.soul, "soul", true));
 
   //For attributes, buffs, and debuffs, make sure to submit the anchor[target] instead of just anchor as parameters
-  if (anchor.attributes) scalers = scalers.concat(parseAttributes(anchor.attributes));
-  if (anchor.buffs) scalers = scalers.concat(parseBuffs(anchor.buffs));
-  if (anchor.debuffs) scalers = scalers.concat(parseDebuffs(anchor.debuffs));
+  if (anchor.attributes) scalers = scalers.concat(parseAttributes(anchor));
+  if (anchor.buffs) scalers = scalers.concat(parseBuffs(anchor));
+  if (anchor.debuffs) scalers = scalers.concat(parseDebuffs(anchor));
 
   if (anchor.scaled) scalers.push("scaled");
   if (anchor.value) scalers.push("value");
@@ -761,6 +763,10 @@ function parseFields(anchor) {
     "soulReq",
     "damage",
     "health",
+    "healthGain",
+    "manaGain",
+    "staminaGain",
+    "shieldGain",
     "mana",
     "stamina",
     "shield",
@@ -772,7 +778,11 @@ function parseFields(anchor) {
   ];
 
   for (let i = 0; i < check.length; i++) {
-    anchor[check[i]] && fields.push(check[i]);
+    if(check[i] === "effects"){
+      anchor[check[i]].length > 0 && fields.push(check[i])
+    } else {
+      anchor[check[i]] && fields.push(check[i]);
+    }
   }
   return fields;
 }
@@ -782,7 +792,7 @@ function parseTarget(anchor, target) {
   let divisions = ["repeatable"];
   let categories = ["mindRepeat", "bodyRepeat", "soulRepeat"];
   let effects = ["effects"];
-  let scales = ["damage", "mana", "stamina", "shield"];
+  let scales = ["damage", "healthGain", "manaGain", "staminaGain", "shieldGain"];
 
   let dictionary = [integers, scales, divisions, categories, effects];
   let decision;
@@ -821,25 +831,25 @@ function parseScaleField(anchor, target, values, total, targetText, altName) {
   let details = ["", []];
   //checks to see if its a healthGain, manaGain, etc instead of damage scale. scaleWords[1] === "Gain", means its the former
   let scaleWords = target.split(/(?=[A-Z])/);
-  let totalMultiplier = 0;
+  let totalMultiplier = 1;
   let alt = target;
   if (altName) alt = altName;
   for (let scope = 0; scope < values.length; scope++) {
     //scaled checks if a scale has scaling values
     if (!anchor[target].scaled && values[scope] === "value") {
       //ex: Restores 5 health on self.
-      if (scaleWords[1] === "Gain" && anchor[target].value > 0) details[0] = `Restores ${anchor[target].value} ${alt} on ${targetText}.`;
+      if (scaleWords[1] === "Gain" && anchor[target].value > 0) details[0] = `Restores ${anchor[target].value} ${alt}.`;
       //ex: Destroys 5 health on self.
-      else if (scaleWords[1] === "Gain" && anchor[target].value < 0) details[0] = `Destroys ${anchor[target].value} ${alt} on ${targetText}.`;
+      else if (scaleWords[1] === "Gain" && anchor[target].value < 0) details[0] = `Destroys ${anchor[target].value} ${alt}.`;
       //ex: - applies 5 fear on self.
       else if (altName) details[0] = `- applies ${anchor[target].value} ${alt} on ${targetText}.`;
       //ex: Deals 5 damage on self.
-      else details[0] = `Deals ${anchor[target].value} ${alt}`;
+      else details[0] = `Deals ${anchor[target].value} ${alt} on ${targetText}`;
     } else if (anchor[target].scaled && values[scope] === "value") {
       //ex: Restores a minimum of 5 health.
-      if (scaleWords[1] === "Gain" && anchor[target].value > 0) details[0] = `Restores a minimum of ${anchor[target].value} ${alt} on ${targetText}.`;
+      if (scaleWords[1] === "Gain" && anchor[target].value > 0) details[0] = `Restores a minimum of ${anchor[target].value} ${scaleWords[0]}.`;
       //ex: Destroys a minimum of 5 health.
-      else if (scaleWords[1] === "Gain" && anchor[target].value < 0) details[0] = `Destroys a minimum of ${anchor[target].value} ${alt} on ${targetText}.`;
+      else if (scaleWords[1] === "Gain" && anchor[target].value < 0) details[0] = `Destroys a minimum of ${anchor[target].value} ${scaleWords[0]}.`;
       //ex: - applies a minimum of 5 fear.
       else if (altName) details[0] = `- applies a minimum of ${anchor[target].value} ${alt} on ${targetText}.`;
       //ex: Deals a minimum of 5 damage.
@@ -848,10 +858,21 @@ function parseScaleField(anchor, target, values, total, targetText, altName) {
       //Splits words like mind.cap and so on
       let scale = values[scope].split(".");
       //ex: + 1x fireball damage multiplier for every 10 mind cap
-      details[1].push(`+ 1x ${alt ? alt : anchor.tag} multiplier for every ${anchor[target][scale[0]][scale[1]]} ${scale[0]} ${scale[1]}.`);
-      totalMultiplier += Math.floor(total[scale[0]][scale[1]] / anchor[target][scale[0]][scale[1]]);
+      if(scaleWords.length > 1) {
+        let secondaryWord = scaleWords[1].toLowerCase() + "ed";
+        details[1].push(`+ 1x ${scaleWords[0]} ${secondaryWord} for every ${anchor[target][scale[0]][scale[1]]} ${scale[0]} ${scale[1]}.`);
+        totalMultiplier += Math.floor(total[scale[0]][scale[1]] / anchor[target][scale[0]][scale[1]]);
+      }
+      else if(scale.length === 2){
+        details[1].push(`+ 1x ${alt ? alt : anchor.tag} multiplier for every ${anchor[target][scale[0]][scale[1]]} ${scale[0]} ${scale[1]}.`);
+        totalMultiplier += Math.floor(total[scale[0]][scale[1]] / anchor[target][scale[0]][scale[1]]);
+      } else if(scale.length === 3) {
+        details[1].push(`+ 1x ${alt ? alt : anchor.tag} multiplier for every ${anchor[target][scale[0]][scale[1]][scale[2]]} points in ${scale[1]} (${scale[0]}).`);
+        totalMultiplier += Math.floor(total[scale[0]][scale[1]][scale[2]] / anchor[target][scale[0]][scale[1]][scale[2]]);
+      }
+
     }
-    if (totalMultiplier > 0) {
+    if (totalMultiplier > 1) {
       let finalValue = totalMultiplier * anchor[target].value;
       if (scaleWords[1] === "Gain" && anchor[target].value > 0) details[0] = details[0] + ` Will restore ${finalValue} ${alt}`;
       if (scaleWords[1] === "Gain" && anchor[target].value < 0) details[0] = details[0] + ` Will destroy ${finalValue} ${alt}`;
@@ -918,7 +939,7 @@ function parseField(anchor, target, values, total, extra, extraValues) {
     }
   } else if (decision === 1) {
     //is a scale
-    let targetText = anchor.target === 1 ? "target" : "self";
+    let targetText = anchor.target === 2 ? "all enemies" : (anchor.target === 1 ? "target" : "self");
     details = parseScaleField(anchor, target, values, total, targetText);
   } else if (decision === 2) {
     //is a repeatable
@@ -963,12 +984,16 @@ function parseField(anchor, target, values, total, extra, extraValues) {
     //is an effect
     details = [["", []]];
     for (let selectedEffect = 0; selectedEffect < anchor[target].length; selectedEffect++) {
-      let targetText = anchor[target][selectedEffect].target ? "target" : "self";
+      let targetText = anchor[target][selectedEffect].target === 2 ? "all enemies" : (anchor[target][selectedEffect].target ? "target" : "self");
       details[selectedEffect][0] = `${anchor[target][selectedEffect].name}`;
       details[selectedEffect][1].push(`effects ${targetText} for ${anchor[target][selectedEffect].turns} turns`);
       for (let scope = 0; scope < anchor[target][selectedEffect].modifiers.length; scope++) {
         let modifier = anchor[target][selectedEffect].modifiers[scope];
-        details[selectedEffect][1].push(parseScaleField(modifier, "scale", values[selectedEffect][3][scope][1], total, targetText, modifier.target));
+        if(modifier.scale) {
+          details[selectedEffect][1].push(parseScaleField(modifier, "scale", values[selectedEffect][3][scope][1], total, targetText, modifier.target));
+        } else {
+          details[selectedEffect][1].push([`- applies ${modifier.target} for ${anchor[target][selectedEffect].turns} turns on ${targetText}`])
+        }
       }
     }
   }
@@ -1012,6 +1037,7 @@ function parseSlottedAbility(slot, character, equipped) {
       if (slot.ability[fields[i]]) details = details.concat(parseField(slot.ability, fields[i], targets[i], total));
     }
   }
+
   return details;
 }
 
@@ -1021,7 +1047,7 @@ function slottedAbilityDetails(slot, character, equipped) {
   let htmlExport = [];
 
   let integers = ["healthCost", "manaCost", "staminaCost", "shieldCost", "mindReq", "bodyReq", "soulReq"];
-  let scales = ["damage", "mana", "stamina", "shield"];
+  let scales = ["damage", "mana", "stamina", "shield", "healthGain", "manaGain", "staminaGain", "shieldGain"];
 
   for (let i = 0; i < fields.length; i++) {
     if (fields[i] === "mindRepeat" || fields[i] === "bodyRepeat" || fields[i] === "soulRepeat") {
@@ -1030,6 +1056,9 @@ function slottedAbilityDetails(slot, character, equipped) {
   }
 
   let fieldCount = 0;
+
+  console.log(details[3]);
+  console.log(fields);
 
   for (let i = 0; i < details.length; i++) {
     if (integers.includes(fields[fieldCount])) {
@@ -1052,7 +1081,7 @@ function slottedAbilityDetails(slot, character, equipped) {
           {details[i]}
         </span>
       );
-    } else if (scales.includes(fields[i]) || fields[fieldCount] === "repeatable") {
+    } else if (scales.includes(fields[fieldCount]) || fields[fieldCount] === "repeatable") {
       htmlExport.push(
         <h1
           className="subheader"
@@ -1069,22 +1098,22 @@ function slottedAbilityDetails(slot, character, equipped) {
       );
       i++;
       for (let scope = 0; scope < details[i].length; scope++) {
-        htmlExport.push(
-          <h1
-            className="subheader"
-            style={{
-              fontSize: "12px",
-              textAlign: "left",
-              marginTop: "1px",
-              marginLeft: "5px",
-              fontFamily: "Piazzolla",
-              marginBottom: scope + 1 === details[i].length ? "20px" : "",
-            }}
-            key={`${i}-${Math.random()}`}
-          >
-            {details[i][scope]}
-          </h1>
-        );
+          htmlExport.push(
+            <h1
+              className="subheader"
+              style={{
+                fontSize: "12px",
+                textAlign: "left",
+                marginTop: "1px",
+                marginLeft: "5px",
+                fontFamily: "Piazzolla",
+                marginBottom: scope + 1 === details[i].length ? "20px" : "",
+              }}
+              key={`${i}-${Math.random()}`}
+            >
+              {details[i][scope]}
+            </h1>
+          );
       }
     } else if (fields[fieldCount] === "effects") {
       htmlExport.push(
@@ -1118,7 +1147,7 @@ function slottedAbilityDetails(slot, character, equipped) {
             {details[i][1][modNum][0]}
           </h1>
         );
-        if (details[i][1][modNum][1].length > 0) {
+        if (details[i][1][modNum].length > 1 && details[i][1][modNum][1].length > 0) {
           for (let modDetails = 0; modDetails < details[i][1][modNum][1].length; modDetails++) {
             htmlExport.push(
               <h1
@@ -1143,7 +1172,6 @@ function slottedAbilityDetails(slot, character, equipped) {
     fieldCount++;
   }
 
-  console.log(htmlExport);
   return htmlExport;
 }
 

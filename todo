@@ -1,0 +1,30 @@
+CHARACTER SCHEMA
+-update character data type to include locations and remove extraneous values like enterprise
+-add droprates to the character schema
+-need a function to update character stats
+
+
+LOCATIONS
+-expand locations to include enterprises and possible activities (large update)
+
+-implement perks on client side display
+-Current monster templates need to have lines added (hallow axolotl, water nymph, sea anomaly)
+-healing spring, treasure room, and rest room need functionality
+-rework dungeon placement
+-make creating dungeons have a cost
+-add in loading screens
+-create treasure chest creature
+-create items to loot off of bosses
+-integrate new user stats like purity and wisdom into client
+
+-todo
+integrate: cap, place, location, humanity, canEquip, defRes, debuffRes, skins, lines
+-creating a character does not verify if the user actually has that spirit or location unlocked, it should
+-add description on locations and spirit selection in charCreation
+-link more of settlement besides just the name to the settlement screen
+-figure out somewhere to toss alignment text and humanity text
+-add a rest button
+-use party data in dungeons.js (minor module) to client side block people in parties from entering trials
+-add validation to dungeon creation (dungeon creation should have more checks if it should actually create on the server command)
+
+

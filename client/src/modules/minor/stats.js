@@ -19,6 +19,7 @@ export default function Stats({ characterId, refetch, refreshData }) {
   const character = useContext(CharacterContext);
 
   //Calculations
+  const [rerender, setRerender] = useState(Math.random());
   const [stat, setStat] = useState({
     capUsed: 0,
     statUsed: 0,
@@ -151,7 +152,10 @@ export default function Stats({ characterId, refetch, refreshData }) {
     refetch();
     if (!characterLoad || !refreshData) {
       resetStat();
+      console.log("ape");
+      resetStat();
     }
+    setRerender(Math.random());
   }
 
   //Display
@@ -463,7 +467,7 @@ export default function Stats({ characterId, refetch, refreshData }) {
   };
 
   return (
-    <div className="stats">
+    <div className="stats" key={rerender}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
         <button
           className="submit-button"

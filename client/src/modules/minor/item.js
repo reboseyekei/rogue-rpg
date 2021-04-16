@@ -179,7 +179,7 @@ function Item({ itemId, enchantments, status, type, slot, setSlot }) {
               }}
               className="tooltiptext"
             >
-              <h4 style={{ fontFamily: "Piazzolla", margin: 0, textAlign: "center", color: "gold" }}>{fetchedItem.name}</h4>
+              <h4 key={fetchedAbility ? "placeholder" : "random"} style={{ fontFamily: "Piazzolla", margin: 0, textAlign: "center", color: "gold" }}>{fetchedItem.name}</h4>
               <h6 style={{ margin: 0, marginBottom: "2px" }}>{fetchedItem.desc}</h6>
               {bodyGenerator(fetchedItem)}
             </div>

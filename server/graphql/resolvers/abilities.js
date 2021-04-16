@@ -4,6 +4,7 @@ const { AuthenticationError } = require("apollo-server");
 const User = require("../../models/User");
 const Ability = require("../../models/Ability");
 const AbilitiesInv = require("../../models/AbilitiesInv");
+const { adminList } = require("../../util/admins");
 
 module.exports = {
   Query: {
@@ -67,7 +68,7 @@ module.exports = {
     ) {
       const verify = checkAuth(context);
       const user = await User.findById(verify.id);
-      if (user.username === "reboseyekei" || user.username === "rebo") {
+      if (adminList.includes(user.username)) {
         const newAbility = new Ability({
           tag,
           lvl,

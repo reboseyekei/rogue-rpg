@@ -204,6 +204,7 @@ module.exports = gql`
   ====================== PERKS/EFFECTS/ABILITIES ======================
   """
   type Perk {
+    id: ID!
     name: String!
     desc: String!
     """
@@ -505,6 +506,76 @@ module.exports = gql`
     perks: [String]
   }
 
+  input LevelInput {
+    lvl: Int
+    xp: Int
+    potentialIncrease: Int
+    capIncrease: Int
+    statIncrease: Int
+    cap: Int
+    stat: Int
+    health: Int
+    mana: Int
+    stamina: Int
+    shield: Int
+    bonus: [Int]
+    perks: [String]
+  }
+
+  """
+  ====================== SPIRIT ======================
+  """
+  type Spirit {
+    id: ID!
+    name: String!
+    desc: String!
+    level: Level!
+    alignment: Int!
+    humanity: Int!
+    slots: Int!
+    abilities: [String]!
+    mind: Mind
+    body: Body
+    soul: Soul
+    attributes: Attributes
+    buffs: Buffs
+    debuffs: Debuffs
+    health: Division!
+    mana: Division!
+    stamina: Division!
+    shield: Division!
+    defRes: Int!
+    debuffRes: Int!
+    perks: [String]
+    skins: [[String]]!
+    canEquip: Int!
+  }
+
+  input SpiritInput {
+    name: String!
+    desc: String!
+    level: LevelInput!
+    alignment: Int!
+    humanity: Int!
+    slots: Int!
+    abilities: [String]!
+    mind: MindInput
+    body: BodyInput
+    soul: SoulInput
+    attributes: AttributesInput
+    buffs: BuffsInput
+    debuffs: DebuffsInput
+    health: DivisionInput!
+    mana: DivisionInput!
+    stamina: DivisionInput!
+    shield: DivisionInput!
+    defRes: Int!
+    debuffRes: Int!
+    perks: [String]
+    skins: [[String]]!
+    canEquip: Int!
+  }
+
   """
   ====================== FAMILIARS/CHARACTERS ======================
   """
@@ -517,19 +588,26 @@ module.exports = gql`
     perks: [String]
     inventory: String
   }
+
   type Character {
     id: ID!
     owner: ID!
     name: String!
-    place: ID!
+    spirit: String
+    place: String!
+    party: String
     level: Level
+    cap: Int
+    tags: [String]
+    titles: [String]
     alignment: Int!
+    humanity: Int!
     attributes: Attributes
     buffs: Buffs
     debuffs: Debuffs
     slots: Int!
     abilitiesInv: String!
-    cooldown: [Int]
+    cooldowns: [Int]
     mind: Mind!
     body: Body!
     soul: Soul!
@@ -537,17 +615,45 @@ module.exports = gql`
     mana: Division!
     stamina: Division!
     shield: Division!
+    defRes: Int!
+    debuffRes: Int!
     perks: [String]
     effects: [Effect]
+    canEquip: Int!
     equipment: String!
     inventory: String!
     familiar: String
-    skin: String!
+    """
+      skins uses the first array slot to decide which skin is being used
+      ["warrior"]
+      the 2nd array slot decides which skins are available
+      ["bandit", "adventurer"]
+      the third array slot decides which skins are unlocked through leveling further, first skin requires level five, 2nd skin requires level 10, 3rd skin requires 15
+      ["knight", "palladin", "general"]
+      the fourth array slot decides which skins were unlocked through events, etc
+      ["seraph", "titan"]
+    """
+    skins: [[String]]!
+    lines: [[String]]
   }
+
+  type CharacterOutput {
+    id: ID!
+    name: String!
+    level: Int!
+    spirit: String!
+    skin: String!
+    health: Division!
+    mana: Division!
+    stamina: Division!
+    shield: Division!
+    effects: [Effect]
+  }
+
   input CreateCharacterInput {
     charName: String!
-    place: String!
-    abilityChoice: Int!
+    locationId: String!
+    spiritId: String!
   }
   input updateCharacterStatsInput {
     characterId: ID!
@@ -570,12 +676,33 @@ module.exports = gql`
     will: Int!
   }
   """
-  ====================== ENTERPRISE ======================
+  ====================== LOCATION ======================
   """
-  type Enterprise {
+  type Location {
+    id: ID!
     name: String!
-    level: Int
-    cost: Int
+    desc: String!
+    parties: [String]!
+    areas: [String]
+  }
+
+  input LocationInput {
+    name: String!
+    desc: String!
+    areas: String!
+  }
+
+  """
+  ====================== PARTY ======================
+  """
+
+  type Party {
+    id: ID!
+    name: String!
+    location: String!
+    charting: Boolean!
+    characters: [String]!
+    tokenDistribution: [Int]!
   }
 
   """
@@ -588,28 +715,216 @@ module.exports = gql`
     username: String!
     characters: [String]!
     familiars: [String]!
-    gold: Int!
+    essence: Int!
+    purity: Int!
+    wisdom: Int!
     vault: [String]
-    library: [String]
-    laboratory: [String]
-    shop: Enterprise
-    auction: Enterprise
-    guild: Enterprise
-    smith: Enterprise
-    manor: Enterprise
-    palace: Enterprise
-    caravan: Enterprise
+    locations: [String]
+    spirits: [String]
     createdAt: String!
   }
   input RegisterInput {
     email: String!
+    username: String!
     password: String!
     confirmPassword: String!
-    username: String!
   }
   input LoginInput {
     email: String!
     password: String!
+  }
+
+  """
+  ====================== DUNGEONS/REGIONS ======================
+  """
+  type MonsterTemplate {
+    id: ID!
+    name: String!
+    """
+    name: the base name of the creature
+    type: creature, trap, treasure
+    alignmentRange: creatures will have the ability to stray from their dungeons alignments, and so meeting a boss with a good alignment might help you
+    rarity: the ability for a creature to be buffed up into a miniboss, will add onto the dungeon rarity
+    environments: the environment a creature can be in
+    the rest is just the monster stats that would be used
+    equipment: a list of items the monster has equipped, a function will properly equip them
+    items: a list of items the monster would have inside its inventory
+    skins: first array contains the skin that it will be using, 2nd array contains that skin and the skin it will use if rare
+    """
+    type: String!
+    humanity: Int!
+    alignmentRange: Int!
+    rarity: Int!
+    droprate: Int!
+    environments: [String]!
+    level: Level!
+    attributes: Attributes
+    buffs: Buffs
+    debuffs: Debuffs
+    slots: Int!
+    abilitiesInv: String!
+    cooldown: [Int]
+    mind: Mind!
+    body: Body!
+    soul: Soul!
+    health: Division!
+    mana: Division!
+    stamina: Division!
+    shield: Division!
+    defRes: Int
+    debuffRes: Int
+    perks: [String]
+    effects: [Effect]
+    equipment: [String]
+    canEquip: Int!
+    items: [String]
+    skins: [String]!
+    lines: [[String]]
+  }
+
+  input MonsterTemplateInput {
+    name: String!
+    type: String!
+    alignmentRange: Int!
+    humanity: Int!
+    rarity: Int!
+    droprate: Int!
+    environments: [String]!
+    level: LevelInput!
+    attributes: AttributesInput
+    buffs: BuffsInput
+    debuffs: DebuffsInput
+    slots: Int!
+    abilities: [String]!
+    cooldown: [Int]!
+    mind: MindInput
+    body: BodyInput
+    soul: SoulInput
+    health: DivisionInput!
+    mana: DivisionInput!
+    stamina: DivisionInput!
+    shield: DivisionInput!
+    defRes: Int
+    debuffRes: Int
+    perks: [String]
+    effects: [EffectInput]
+    equipment: [String]
+    canEquip: Int!
+    items: [String]
+    skins: [String]!
+    lines: [[String]]
+  }
+
+  type AreaTemplate {
+    id: ID!
+    """
+    type: Region, expedition, trial
+    level: estimated level you should be to start this
+    alignment: base alignment of creatures in the dungeon
+    humanity: base humanity added to creatures in the dungeon, humanity indicating level of intelligence and how civilized a being is
+    rarity: -5 to 5, indicating the likelihood of minibosses. A 6 needs to be rolled for a miniboss to spawn
+    droprate: 0 to 10 indictating the multiplier on drops, 3 is the average 
+    chaos: the number of floors its possible for you to backtrack, good for messy dungeons. SHOULD NOT BE HIGHER THAN 5
+    size: How many floors
+    length: base rooms you have to go through to complete each floor
+    range: max amount of variation allowed in number of rooms
+    containment: level of restrictions in the dungeon, the array corresponds to the floors
+     -0 means you can leave mid rooms and you can't die,
+     -1 means you can leave mid rooms and you can die, 
+     -2 means you can't leave mid rooms(only through teleporter rooms) and you can die
+    mobs: what creatures can spawn
+    bosses: order of bosses corresponding to each floor
+    environments: possible environments within the dungeon
+    """
+    name: String!
+    desc: String!
+    icon: String!
+    type: String!
+    level: Int!
+    alignment: Int!
+    humanity: Int!
+    rarity: Int!
+    chaos: Int!
+    droprate: Int!
+    size: Int!
+    length: Int!
+    range: Int!
+    maxLifespan: Int!
+    containment: [Int]!
+    mobs: [String]
+    bosses: [String]
+    environments: [String]
+  }
+
+  input AreaTemplateInput {
+    name: String!
+    desc: String!
+    icon: String!
+    type: String!
+    level: Int!
+    alignment: Int!
+    humanity: Int!
+    rarity: Int!
+    chaos: Int!
+    droprate: Int!
+    size: Int!
+    length: Int!
+    range: Int!
+    maxLifespan: Int!
+    containment: [Int]!
+    mobs: [String]
+    bosses: [String]
+    environments: [String]
+  }
+
+  type Room {
+    lifespan: Int!
+    environment: String!
+    template: MonsterTemplate
+  }
+
+  type Dungeon {
+    id: ID!
+    name: String!
+    floors: [[Room]]
+    bossRooms: [Room]
+    currFloor: Int!
+    currRoom: Int!
+    leadingTo: [Int]
+    chaos: Int!
+    droprate: Int!
+    occupants: [String]
+    players: [String]
+    turn: [Int]
+    totalTokens: [Int]
+    tokens: [Int]
+    tokenDistribution: [Int]
+    return: String!
+    log: [String]
+  }
+
+  type DungeonOutput {
+    room: Room,
+    occupants: [CharacterOutput]
+    players: [CharacterOutput]
+    playerIds: [String]
+    tokens: [String]
+    tokenDistribution: [String]
+    totalTokens: [String]
+  }
+
+  input CreateDungeonInput {
+    templateId: ID!
+    partyId: ID
+    characterId: ID!
+    locationId: ID!
+  }
+
+  union Place = Dungeon | Location
+
+  type PlaceData {
+    places: [String]
+    data: [Place]
   }
 
   """
@@ -626,11 +941,47 @@ module.exports = gql`
     getActiveItem(anchor: ID!, target: String!): Item
     getAbility(abilityId: ID!): Ability
     getAbilitiesInv(abilitiesInvId: ID!): AbilitiesInv
+    getDungeon(dungeonId: ID!): Dungeon
+    getSpirit(spiritId: ID!): Spirit
+    getLocation(locationId: ID!): Location
+    getSpirits(userId: ID!): [Spirit]
+    getLocations(userId: ID!): [Location]
+    getMonsterTemplate(monsterTemplateId: ID!): MonsterTemplate
+    getAreaTemplate(areaTemplateId: ID!): AreaTemplate
+    getPerk(perkId: ID!): Perk
+    getPlace(placeId: ID!): Place
+    getPlaces(userId: ID!): PlaceData
+    getParty(partyId: ID!): Party
+    getParties(locationId: ID!): [Party]
+    getMembers(partyId: ID!): [Character]
+    getAreas(locationId: ID!): [AreaTemplate]
+    getPlayers(dungeonId: ID!): [Character]
+    getRoom(dungeonId: ID!, floor: Int!, room: Int!): Room
+    getDungeonOutput(dungeonId: ID!): DungeonOutput
   }
   type Mutation {
     register(registerInput: RegisterInput): User!
     login(loginInput: LoginInput): User!
+    """
+    ADMIN COMMANDS
+    """
+    createSpirit(createSpiritInput: SpiritInput): Spirit!
+    createLocation(createLocationInput: LocationInput): Location!
+    createMonsterTemplate(createMonsterTemplateInput: MonsterTemplateInput): MonsterTemplate!
+    createAreaTemplate(createAreaTemplateInput: AreaTemplateInput): AreaTemplate!
+    createItem(createItemInput: CreateItemInput): Item!
+    removeItem(itemId: ID!): String!
+    createAbility(createAbilityInput: CreateAbilityInput): Ability!
+    createPerk(createPerkInput: PerkInput): Perk!
+    deleteAll: String!
+    """
+    USER SENSITIVE COMMANDS
+    """
     createCharacter(createCharacterInput: CreateCharacterInput): Character!
+    """
+    GENERAL COMMANDS
+    """
+    changeSkin(skinIndex: Int!, characterId: ID!): Character!
     updateCharacterStats(updateCharacterStatsInput: updateCharacterStatsInput): Character!
     deleteCharacter(characterId: ID!): String!
     switchItems(switchItemsInput: SwitchItemsInput): String!
@@ -638,8 +989,17 @@ module.exports = gql`
     deleteInventory(inventoryId: ID!): String!
     deleteEquip(deleteEquipInput: DeleteEquipInput): String!
     deleteEquipment(equipmentId: ID!): String!
-    createItem(createItemInput: CreateItemInput): Item!
-    removeItem(itemId: ID!): String!
-    createAbility(createAbilityInput: CreateAbilityInput): Ability!
+    createDungeon(createDungeonInput: CreateDungeonInput): Dungeon!
+    enterLocation(placeId: ID!, characterId: ID!): Location!
+    leaveLocation(placeId: ID!, characterId: ID!): Location!
+    createParty(locationId: ID!, characterId: ID!, name: String!): Party
+    joinParty(partyId: ID!, characterId: ID!): Party
+    leaveParty(partyId: ID!, characterId: ID!): String
+    kickParty(partyId: ID!, characterId: ID!): String
+    updatePartyToken(partyId: ID!, newTokenDist: [Int]!): Party
+    disbandParty(partyId: ID!): String!
+  }
+  type Subscription {
+    locationConnect(locationId: ID!): Character!
   }
 `;

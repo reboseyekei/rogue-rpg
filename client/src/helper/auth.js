@@ -19,10 +19,10 @@ if (localStorage.getItem("jwtToken")) {
 const AuthContext = createContext({
   user: null,
   character: null,
-  login: (data) => {},
-  logout: () => {},
-  setCharacter: (data) => {},
-  resetCharacter: () => {},
+  login: (data) => { },
+  logout: () => { },
+  setCharacter: (data) => { },
+  resetCharacter: () => { },
 });
 
 function authReducer(state, action) {

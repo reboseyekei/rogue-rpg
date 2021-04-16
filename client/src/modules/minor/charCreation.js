@@ -1,6 +1,6 @@
 //General
-import React, { useState } from "react";
-import { useMutation } from "@apollo/react-hooks";
+import React, { useState, useContext, useEffect } from "react";
+import { useMutation, useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
 //Material UI
@@ -14,47 +14,43 @@ import "../styles/base.css";
 //Assets
 import Load from "../../assets/loading/donkey_web.gif";
 
+//Contexts
+import { AuthContext } from "../../helper/auth";
+
 //Transition
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export default function CharCreation({ open, handleClose }) {
+export default function CharCreation({ open, handleClose}) {
+  const context = useContext(AuthContext);
+  const userId = context.user.id;
+
   //NEW CHARACTER VALUES
   const [values, setValues] = useState({
     charName: "",
-    place: "Spawn Village",
-    abilityChoice: 1,
+    locationId: "",
+    spiritId: "",
   });
 
   const handleChange = (event) => {
-    if (event.target.name === "abilityChoice") {
-      let num = parseInt(event.target.value);
-      setValues({ ...values, abilityChoice: num });
-    } else {
-      setValues({ ...values, [event.target.name]: event.target.value });
-    }
+    setValues({ ...values, [event.target.name]: event.target.value });
   };
 
   const resetValues = () => {
     setValues({
       charName: "",
-      place: "Spawn Village",
-      abilityChoice: 1,
+      locationId: "",
+      spiritId: "",
     });
     setErrors({});
   };
 
   const [errors, setErrors] = useState({});
 
-  const [createCharacter, { loading: characterLoad }] = useMutation(CREATE_CHARACTER, {
-    update(_, data) {
-      handleClose();
-      resetValues();
-    },
+  const [createCharacter, { loading: characterLoad, data: characterData }] = useMutation(CREATE_CHARACTER, {
     onError(err) {
       setErrors(err.graphQLErrors[0].extensions.exception.errors);
-      console.log(errors);
     },
     variables: values,
   });
@@ -63,6 +59,23 @@ export default function CharCreation({ open, handleClose }) {
     event.preventDefault();
     createCharacter();
   };
+
+  const { loading: locationsLoad, data: locationsData } = useQuery(FETCH_LOCATIONS, { variables: { userId } });
+  const { loading: spiritsLoad, data: spiritsData } = useQuery(FETCH_SPIRITS, { variables: { userId } });
+
+  useEffect(() => {
+    const passTime = (ms) => new Promise((res) => setTimeout(res, ms));
+    async function closeWindow() {
+      resetValues();
+      await passTime(1000);
+      handleClose();
+    }
+
+    if(!characterLoad && characterData) {
+      closeWindow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [characterData]);
 
   const dialog = (
     <Dialog
@@ -87,9 +100,12 @@ export default function CharCreation({ open, handleClose }) {
           <p>{!errors.charName ? "" : errors.charName}</p>
         </Grid>
         <Grid item xs={12}>
-          <label htmlFor="placeSelect">Spawn place</label>
-          <select id="placeSelect" name="place" value={values.place} onChange={handleChange}>
-            <option value="Spawn Village">Spawn Village</option>
+          <label htmlFor="locationSelect">Spawn place</label>
+          <select id="locationSelect" name="locationId" value={values.place} onChange={handleChange}>
+            <option value=""></option>
+            {!locationsLoad && locationsData
+              ? locationsData.getLocations.map((location) => <option key={location.id} value={location.id}>{`${location.name}`}</option>)
+              : ""}
           </select>
           <div>
             <p style={{ color: "white", lineHeight: "1.6", height: "auto" }}>
@@ -99,14 +115,13 @@ export default function CharCreation({ open, handleClose }) {
           </div>
         </Grid>
         <Grid item xs={12}>
-          <label htmlFor="abilityChoice">Class select</label>
-          <select id="abilityChoice" name="abilityChoice" value={values.abilityChoice} onChange={handleChange}>
-            <option value={1}>Warrior</option>
-            <option value={2}>Rogue</option>
-            <option value={3}>Wizard</option>
+          <label htmlFor="spiritSelect">Class select</label>
+          <select id="spiritSelect" name="spiritId" value={values.abilityChoice} onChange={handleChange}>
+            <option value=""></option>
+            {!spiritsLoad && spiritsData ? spiritsData.getSpirits.map((spirit) => <option key={spirit.id} value={spirit.id}>{`${spirit.name}`}</option>) : ""}
           </select>
           <p style={{ color: "white", lineHeight: "1.6", height: "auto" }}>
-            Classes only decide your character's starting skin and ability, unless indicated as rare
+            Classes can influence how you play the game, but aren't hard limitations on what your character can do
           </p>
         </Grid>
         <Grid item xs={10} md={5} lg={3}>
@@ -121,15 +136,34 @@ export default function CharCreation({ open, handleClose }) {
 }
 
 const CREATE_CHARACTER = gql`
-  mutation createCharacter($charName: String!, $place: String!, $abilityChoice: Int!) {
-    createCharacter(createCharacterInput: { charName: $charName, place: $place, abilityChoice: $abilityChoice }) {
+  mutation createCharacter($charName: String!, $locationId: String!, $spiritId: String!) {
+    createCharacter(createCharacterInput: { charName: $charName, locationId: $locationId, spiritId: $spiritId }) {
       id
-      skin
+      skins
       name
       place
       level {
         lvl
       }
+    }
+  }
+`;
+
+const FETCH_LOCATIONS = gql`
+  query($userId: ID!) {
+    getLocations(userId: $userId) {
+      id
+      name
+    }
+  }
+`;
+
+const FETCH_SPIRITS = gql`
+  query($userId: ID!) {
+    getSpirits(userId: $userId) {
+      id
+      name
+      desc
     }
   }
 `;

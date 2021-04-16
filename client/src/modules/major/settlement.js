@@ -12,10 +12,13 @@ import Inventory from "../minor/inventory";
 import Stats from "../minor/stats";
 import Equipment from "../minor/equipment";
 import Character from "../minor/character";
+import Party from "../minor/party";
+import Venture from "../minor/venture";
 
 //Contexts
 import { AuthContext } from "../../helper/auth";
 import { CharacterContext } from "../../helper/character";
+import { PlaceContext } from "../../helper/place";
 
 //Styles
 import "../styles/base.css";
@@ -26,6 +29,7 @@ export default function Settlement() {
   //GENERAL VALUES
   const context = useContext(AuthContext);
   const character = useContext(CharacterContext);
+  const place = useContext(PlaceContext);
 
   const characterId = context.character.id;
   const userId = context.user.id;
@@ -37,6 +41,7 @@ export default function Settlement() {
     vault: false,
     party: false,
     character: false,
+    venture: false,
   });
 
   const toggleModal = (target) => {
@@ -79,7 +84,8 @@ export default function Settlement() {
     return (
       <Grid container justify="center" style={{ height: "100vh" }}>
         <Grid item md={10} lg={11} align="center">
-          <h1 className="header">Starter&ensp;Town</h1>
+          <h1 className="header">{place.name}</h1>
+          <h1 className="subheader-alternate">{place.desc}</h1>
         </Grid>
         <Grid item md={2} lg={1} style={{ backgroundColor: "#1c1c1c", borderLeft: "2px solid black", overflow: "hidden" }} align="center">
           <button className="side-button" onClick={() => toggleModal("character")}>
@@ -117,6 +123,11 @@ export default function Settlement() {
           <button className="side-button" onClick={() => toggleModal("party")}>
             party
           </button>
+          {modal.party && character.place ? <Modal title="Party" component={<Party />} /> : ""}
+          <button className="side-button" onClick={() => toggleModal("venture")}>
+            venture
+          </button>
+          {modal.venture && character.place ? <Modal title="Venture" component={<Venture />} /> : ""}
         </Grid>
       </Grid>
     );
@@ -128,7 +139,11 @@ const FETCH_CHARACTER = gql`
     getCharacter(characterId: $characterId) {
       owner
       name
+      party
+      spirit
       place
+      tags
+      titles
       level {
         lvl
         xp
@@ -136,8 +151,9 @@ const FETCH_CHARACTER = gql`
         stat
       }
       alignment
+      humanity
       slots
-      cooldown
+      cooldowns
       mind {
         cap
         creation
@@ -287,7 +303,7 @@ const FETCH_CHARACTER = gql`
       equipment
       inventory
       familiar
-      skin
+      skins
       health {
         max
         current
@@ -308,6 +324,8 @@ const FETCH_CHARACTER = gql`
         current
         division
       }
+      defRes
+      debuffRes
     }
   }
 `;

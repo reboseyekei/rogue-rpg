@@ -9,6 +9,7 @@ const User = require("../../models/User");
 const Inventory = require("../../models/Inventory");
 const Equipment = require("../../models/Equipment");
 const AbilitiesInv = require("../../models/AbilitiesInv");
+const { adminList } = require("../../util/admins");
 
 const { check } = require("../../util/validators");
 
@@ -190,7 +191,7 @@ module.exports = {
     ) {
       const verify = checkAuth(context);
       const user = await User.findById(verify.id);
-      if (user.username === "reboseyekei" || user.username === "rebo") {
+      if (adminList.includes(user.username)) {
         const nameCheck = await Item.findOne({ name });
         if (nameCheck) {
           throw new UserInputError("Item name is taken");
@@ -245,9 +246,10 @@ module.exports = {
       }
     },
     async removeItem(_, { itemId }, context) {
+      //TODO UPDATE THIS TO REMOVE ALL INVENTORIES WITH ITEM
       const verify = checkAuth(context);
       const user = await User.findById(verify.id);
-      if (user.username === "reboseyekei") {
+      if (adminList.includes(user.username)) {
         try {
           const item = await Item.findById(itemId);
           await item.delete();

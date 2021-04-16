@@ -16,11 +16,11 @@ import { CharacterContext } from "../../helper/character";
 //Helpers
 import { parseEquipped, abilityArray, slottedAbilityDetails } from "../../helper/helpers";
 
-//Assets
-import Loading from "../../assets/loading/donkey_web.gif";
-
 //Styles
 import "../styles/base.css";
+
+//Assets
+import Loading from "../../assets/loading/donkey_web.gif";
 
 function Character() {
   //Data
@@ -41,12 +41,31 @@ function Character() {
     variables: { firstAnchor: drag.draggedFrom, secondAnchor: drag.draggedTo, firstTarget: drag.dragging, secondTarget: drag.draggedOn },
   });
 
+  const [changeSkin, {loading: skinLoad}] = useMutation(CHANGE_SKIN);
+
   //Calculations
   //stores stat values of items equipped
   const [stat, setStat] = useState(parseEquipped(character.equipped));
 
   //stores how many slots you have available persistently
   const [slots, setSlots] = useState(abilityArray(character.slots + stat.slots));
+
+  //Values: used for vanity only
+  const [values, setValues] = useState({
+    skinIndex: "",
+    characterId: character.characterId,
+  });
+
+  const handleChange = (event) => {
+    setValues({ ...values, [event.target.name]: event.target.value });
+  };
+
+  const resetValues = () => {
+    setValues({
+      skinIndex: "",
+      characterId: character.characterId,
+    });
+  };
 
   //stores ability inventory (all ability slot id's)
   const [storedAbilities, setStoredAbilities] = useState();
@@ -122,16 +141,17 @@ function Character() {
     ["luck", "capacity", "clarity", "will"],
   ];
 
-  let alignmentText;
-  if (character.alignment > 300) alignmentText = "King Incarnate";
-  if (character.alignment > 100) alignmentText = "Saint";
-  if (character.alignment > 50) alignmentText = "Hero";
-  if (character.alignment > 10) alignmentText = "Good";
-  if (character.alignment <= 10 && character.alignment >= -10) alignmentText = "Neutral";
-  if (character.alignment < -10) alignmentText = "Impure";
-  if (character.alignment < -50) alignmentText = "Asura";
-  if (character.alignment < -100) alignmentText = "Sage";
-  if (character.alignment < -300) alignmentText = "Demon Incarnate";
+  //TODO use this somewhere else
+  // let alignmentText;
+  // if (character.alignment > 300) alignmentText = "King Incarnate";
+  // if (character.alignment > 100) alignmentText = "Saint";
+  // if (character.alignment > 50) alignmentText = "Hero";
+  // if (character.alignment > 10) alignmentText = "Good";
+  // if (character.alignment <= 10 && character.alignment >= -10) alignmentText = "Neutral";
+  // if (character.alignment < -10) alignmentText = "Impure";
+  // if (character.alignment < -50) alignmentText = "Asura";
+  // if (character.alignment < -100) alignmentText = "Sage";
+  // if (character.alignment < -300) alignmentText = "Demon Incarnate";
 
   //Dragging (abilities tab)
   const dragStart = (event, target) => {
@@ -157,6 +177,11 @@ function Character() {
       refetch();
     }
     drag.drop();
+  };
+
+  const capitalize = (word) => {
+    let string = word[0];
+    return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
   let healthMax = character.health.max + character.body.cap * 2 + character.body.vitality * 4 + stat.body.cap * 2 + stat.body.vitality * 4;
@@ -191,8 +216,8 @@ function Character() {
   let staminaMeasure;
   let shieldMeasure;
 
-  let damageReduction = character.body.defense + character.soul.will * 0.5;
-  let debuffResistance = character.soul.will * 2 + character.body.defense * 0.5;
+  let damageReduction = character.defRes + character.body.defense * 0.5 + character.soul.will * 0.25;
+  let debuffResistance = character.debuffRes + character.soul.will * 2 + character.body.defense * 0.5;
 
   if (healthMax === highestStat) {
     healthMeasure = "100%";
@@ -216,6 +241,8 @@ function Character() {
     staminaMeasure = `${(staminaMax / shieldMax) * 100}%`;
   }
 
+  let expCalc = character.level.lvl * character.level.lvl * 10 + 5;
+
   const viewManager = () => {
     if (selected.character) {
       return (
@@ -229,9 +256,7 @@ function Character() {
           </div>
           <div className="divider"></div>
           <div className="inner-scrollbar" style={{ padding: "10px", height: "400px" }}>
-            <h1 className="subheader" style={{ fontSize: "16px" }}>
-              {`Alignment: ${alignmentText} (${character.alignment})`}
-            </h1>
+            <h1 className="subheader">{`EXP: ${character.level.xp}/${expCalc}`}</h1>
             <div style={{ backgroundColor: "#111", paddingTop: "10px", marginTop: "10px", paddingBottom: "10px", height: "350px", borderRadius: "5px" }}>
               <div style={{ padding: "10px" }}>
                 <h1 className="subheader" style={{ fontSize: "12px", textAlign: "left", marginLeft: "8px" }}>
@@ -307,7 +332,7 @@ function Character() {
                 )}
 
                 <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "6px", marginTop: "5px" }}>
-                  {`  regen: ${shieldRegen} flat and 10% of shield per turn`}
+                  {`  regen: ${shieldRegen} flat and 10% max shield per turn`}
                 </h1>
               </div>
               <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "16px", marginTop: "5px" }}>
@@ -518,12 +543,52 @@ function Character() {
           <div style={{ display: "block", height: "45px" }}>
             <div style={{ paddingTop: "20px", marginLeft: "auto", marginRight: "auto" }}>
               <span className="subheader" style={{ fontSize: "20px" }}>
-                vanity (WIP)
+                Vanity
               </span>
             </div>
           </div>
           <div className="divider"></div>
-          <div className="inner-scrollbar" style={{ padding: "10px", height: "400px" }}></div>
+          <div className="inner-scrollbar" style={{ padding: "10px", height: "400px" }}>
+            <Grid container>
+              <Grid item xs={12}>
+                {" "}
+                <img
+                  src={require(`../../assets/skins/${character.skins[0]}.jpg`)}
+                  style={{ height: "200px", borderRadius: "5px", border: "2.5px solid #222" }}
+                  alt={`character graphic for ${character.skins[0]}`}
+                />
+                <h1 className="subheader">{capitalize(character.skins[0])}</h1>
+              </Grid>
+              <Grid item xs={12}>
+                <label htmlFor="skinSelect">Select Skin</label>
+                <select id="skinSelect" name="skinIndex" value={values.skinIndex} onChange={handleChange}>
+                  <option value=""></option>
+                  {character.skins[1].map((skin, index) => (
+                    <option key={skin} value={index}>
+                      {skin}
+                    </option>
+                  ))}
+                </select>
+              </Grid>
+              <Grid item xs={12}>
+                <button
+                  className="submit-button"
+                  onClick={() => {
+                    if (values.skinIndex) {
+                      let newValues = values;
+                      newValues.skinIndex = parseInt(newValues.skinIndex);
+                      setValues(newValues);
+                      changeSkin({ variables: values });
+                    }
+                  }}
+                  style={{ marginBottom: "10px", width: "82.5%", marginTop: "auto" }}
+                  disabled={skinLoad}
+                >
+                  {skinLoad ? <img src={Loading} alt="loading" style={{ marginTop: "-10px" }} /> : "Change Skin"}
+                </button>
+              </Grid>
+            </Grid>
+          </div>
         </div>
       );
     } else if (selected.connections) {
@@ -590,6 +655,14 @@ export default memo(Character);
 const SWITCH_ITEMS = gql`
   mutation switchItems($firstAnchor: ID!, $secondAnchor: ID!, $firstTarget: String!, $secondTarget: String!) {
     switchItems(switchItemsInput: { firstAnchor: $firstAnchor, secondAnchor: $secondAnchor, firstTarget: $firstTarget, secondTarget: $secondTarget })
+  }
+`;
+
+const CHANGE_SKIN = gql`
+  mutation changeSkin($skinIndex: Int!, $characterId: ID!) {
+    changeSkin(skinIndex: $skinIndex, characterId: $characterId) {
+      name
+    }
   }
 `;
 

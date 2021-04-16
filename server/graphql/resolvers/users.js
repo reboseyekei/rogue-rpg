@@ -40,7 +40,7 @@ module.exports = {
     },
   },
   Mutation: {
-    async register(_, { registerInput: { email, password, confirmPassword, username } }) {
+    async register(_, { registerInput: { email, username, password, confirmPassword} }) {
       // Validate User Data
       const { valid, errors } = validateRegisterInput(username, email, password, confirmPassword);
       if (!valid) {
@@ -55,6 +55,7 @@ module.exports = {
           },
         });
       }
+
       const emailCheck = await User.findOne({ email });
       if (emailCheck) {
         throw new UserInputError("Email is taken", {
@@ -91,22 +92,17 @@ module.exports = {
 
       const newUser = new User({
         _id: userId,
-        email,
+        email: email.toLowerCase(),
         password,
         username,
         characters: [],
         familiars: [],
-        gold: 100,
+        essence: 100,
+        purity: 0,
+        wisdom: 0,
         vault: [inventoryId],
-        library: [],
-        laboratory: [],
-        shop: { name: "Shop", level: 0, cost: 10 },
-        auction: { name: "Auction", level: 0, cost: 10 },
-        guild: { name: "Guild", level: 0, cost: 10 },
-        smith: { name: "Smith", level: 0, cost: 5 },
-        manor: { name: "Manor", level: 0, cost: 20 },
-        palace: { name: "Palace", level: 0, cost: 30 },
-        caravan: { name: "Caravan", level: 0, cost: 5 },
+        locations: ["606e7da44c485f5774bfcb75"],
+        spirits: ["606e6d7c616b480ba4cfa1d5", "606e71ce616b480ba4cfa1e3", "606e7542616b480ba4cfa1f1"],
         createdAt: new Date().toISOString(),
       });
 
@@ -128,7 +124,8 @@ module.exports = {
         throw new UserInputError("Errors", { errors });
       }
 
-      const emailCheck = await User.findOne({ email });
+      let tempEmail = email.toLowerCase();
+      const emailCheck = await User.findOne({ email: tempEmail });
       if (!emailCheck) {
         errors.email = "Email not found";
         throw new UserInputError("Email not found", { errors });

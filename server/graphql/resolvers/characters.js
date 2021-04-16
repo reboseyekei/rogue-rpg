@@ -1,18 +1,16 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const { UserInputError } = require("apollo-server");
 
 const mongoose = require("mongoose");
-
 const User = require("../../models/User");
 const Character = require("../../models/Character");
-const Level = require("../../models/Level");
+const Spirit = require("../../models/Spirit");
 const Inventory = require("../../models/Inventory");
 const Equipment = require("../../models/Equipment");
 const Attributes = require("../../models/Attribute");
 const Debuffs = require("../../models/Debuffs");
 const Buffs = require("../../models/Buffs");
 const AbilitiesInv = require("../../models/AbilitiesInv");
+const Location = require("../../models/Location");
 
 const { validateCharacterInput } = require("../../util/validators");
 const checkAuth = require("../../util/checkAuth");
@@ -32,7 +30,7 @@ module.exports = {
             if (character) {
               data.push(character);
             } else {
-              user.splice(index, 1);
+              user.characters.splice(index, 1);
             }
           });
           user.save();
@@ -61,7 +59,7 @@ module.exports = {
     },
   },
   Mutation: {
-    async createCharacter(_, { createCharacterInput: { charName, place, abilityChoice } }, context) {
+    async createCharacter(_, { createCharacterInput: { charName, locationId, spiritId } }, context) {
       const verify = checkAuth(context);
 
       const user = await User.findById(verify.id);
@@ -78,22 +76,14 @@ module.exports = {
 
       user.characters.push(characterId);
 
-      //TODO: Adding certain bonuses and perks by checking a specific enterprise level
-      const newLevel = new Level({
-        lvl: 0,
-        xp: 0,
-        potentialIncrease: 1,
-        capIncrease: 3,
-        statIncrease: 6,
-        cap: 5,
-        stat: 5,
-        health: 4,
-        mana: 2,
-        stamina: 2,
-        shield: 0,
-        bonus: [],
-        perks: [],
-      });
+      //Getting Spirit Template
+      if (!spiritId.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid ID");
+      }
+      const spirit = await Spirit.findById(spiritId);
+      if (!spirit) {
+        throw new Error("Spirit not found");
+      }
 
       const newAttributes = new Attributes({
         space: { default: 0, mod: 0 },
@@ -167,32 +157,62 @@ module.exports = {
         will: 0,
       };
 
-      //Health, shield, mana, and stamina.
-      //Max indicates max, current indicates current health, etc(if you've taken damage it will be less than max)
-      //Division indicates regen
-      const newHealth = {
-        max: 40,
-        current: 40,
-        division: 2,
-      };
+      if (spirit.attributes) {
+        if (spirit.attributes.space.default) newAttributes.space.default += spirit.attributes.space.default;
+        if (spirit.attributes.time.default) newAttributes.time.default += spirit.attributes.time.default;
+        if (spirit.attributes.death.default) newAttributes.death.default += spirit.attributes.death.default;
+        if (spirit.attributes.life.default) newAttributes.life.default += spirit.attributes.life.default;
+        if (spirit.attributes.fire.default) newAttributes.fire.default += spirit.attributes.fire.default;
+        if (spirit.attributes.water.default) newAttributes.water.default += spirit.attributes.water.default;
+        if (spirit.attributes.earth.default) newAttributes.earth.default += spirit.attributes.earth.default;
+        if (spirit.attributes.air.default) newAttributes.air.default += spirit.attributes.air.default;
+      }
 
-      const newShield = {
-        max: 0,
-        current: 0,
-        division: 0,
-      };
+      if (spirit.buffs) {
+        if (spirit.buffs.regen.default) newBuffs.regen.default += spirit.buffs.regen.default;
+        if (spirit.buffs.dread.default) newBuffs.dread.default += spirit.buffs.dread.default;
+        if (spirit.buffs.poison.default) newBuffs.poison.default += spirit.buffs.poison.default;
+        if (spirit.buffs.scorch.default) newBuffs.scorch.default += spirit.buffs.scorch.default;
+        if (spirit.buffs.cold.default) newBuffs.cold.default += spirit.buffs.cold.default;
+        if (spirit.buffs.spark.default) newBuffs.spark.default += spirit.buffs.spark.default;
+        if (spirit.buffs.reflect.default) newBuffs.reflect.default += spirit.buffs.reflect.default;
+        if (spirit.buffs.summon.default) newBuffs.summon.default += spirit.buffs.summon.default;
+        if (spirit.buffs.taunt.default) newBuffs.taunt.default += spirit.buffs.taunt.default;
+        if (spirit.buffs.flee.default) newBuffs.flee.default += spirit.buffs.flee.default;
+      }
 
-      const newMana = {
-        max: 20,
-        current: 20,
-        division: 4,
-      };
+      if (spirit.debuffs) {
+        if (spirit.debuffs.fear.default) newDebuffs.fear.default += spirit.debuffs.fear.default;
+        if (spirit.debuffs.freeze.default) newDebuffs.freeze.default += spirit.debuffs.freeze.default;
+        if (spirit.debuffs.shock.default) newDebuffs.shock.default += spirit.debuffs.shock.default;
+        if (spirit.debuffs.toxin.default) newDebuffs.toxin.default += spirit.debuffs.toxin.default;
+        if (spirit.debuffs.decay.default) newDebuffs.decay.default += spirit.debuffs.decay.default;
+        if (spirit.debuffs.bleed.default) newDebuffs.bleed.default += spirit.debuffs.bleed.default;
+      }
 
-      const newStamina = {
-        max: 20,
-        current: 20,
-        division: 4,
-      };
+      if (spirit.mind) {
+        if (spirit.mind.cap) newMind.cap += spirit.mind.cap;
+        if (spirit.mind.creation) newMind.creation += spirit.mind.creation;
+        if (spirit.mind.destruction) newMind.destruction += spirit.mind.destruction;
+        if (spirit.mind.restoration) newMind.restoration += spirit.mind.restoration;
+        if (spirit.mind.projection) newMind.projection += spirit.mind.projection;
+      }
+
+      if (spirit.body) {
+        if (spirit.body.cap) newBody.cap += spirit.body.cap;
+        if (spirit.body.defense) newBody.defense += spirit.body.defense;
+        if (spirit.body.vitality) newBody.vitality += spirit.body.vitality;
+        if (spirit.body.strength) newBody.strength += spirit.body.strength;
+        if (spirit.body.dexterity) newBody.dexterity += spirit.body.dexterity;
+      }
+
+      if (spirit.soul) {
+        if (spirit.soul.cap) newSoul.cap += spirit.soul.cap;
+        if (spirit.soul.luck) newSoul.luck += spirit.soul.luck;
+        if (spirit.soul.clarity) newSoul.clarity += spirit.soul.clarity;
+        if (spirit.soul.capacity) newSoul.capacity += spirit.soul.capacity;
+        if (spirit.soul.will) newSoul.will += spirit.soul.will;
+      }
 
       const newEquipment = new Equipment({
         _id: equipmentId,
@@ -227,46 +247,29 @@ module.exports = {
         fifteen: { item: null, enchantments: [] },
       });
 
-      //Struggle is set as the default ability
-      let defaultAbility = "5ff780e201734201adfea07a";
-
-      //TODO Update this later to allow for more classes, probably using strings instead of ints
-      let skin = "";
-      let chosenAbility = "";
-      if (abilityChoice === 1) {
-        skin = "warrior";
-        chosenAbility = "5ff7830701734201adfeaf95";
-      } else if (abilityChoice === 2) {
-        skin = "rogue";
-        chosenAbility = "5ff783dc01734201adfeb582";
-      } else if (abilityChoice === 3) {
-        skin = "mage";
-        chosenAbility = "5ff7822101734201adfea93f";
-      }
-
       const newAbilitiesInv = new AbilitiesInv({
         _id: abilitiesInvId,
         owner: characterId,
-        slotOne: { item: defaultAbility, enchantments: [] },
-        slotTwo: { item: chosenAbility, enchantments: [] },
-        slotThree: { item: null, enchantments: [] },
-        slotFour: { item: null, enchantments: [] },
-        slotFive: { item: null, enchantments: [] },
-        slotSix: { item: null, enchantments: [] },
-        slotSeven: { item: null, enchantments: [] },
-        slotEight: { item: null, enchantments: [] },
-        slotNine: { item: null, enchantments: [] },
-        slotTen: { item: null, enchantments: [] },
-        slotEleven: { item: null, enchantments: [] },
-        slotTwelve: { item: null, enchantments: [] },
-        slotThirteen: { item: null, enchantments: [] },
-        slotFourteen: { item: null, enchantments: [] },
-        slotFifteen: { item: null, enchantments: [] },
-        slotSixteen: { item: null, enchantments: [] },
-        slotSeventeen: { item: null, enchantments: [] },
-        slotEighteen: { item: null, enchantments: [] },
-        slotNineteen: { item: null, enchantments: [] },
-        slotTwenty: { item: null, enchantments: [] },
+        slotOne: { item: spirit.abilities[0], enchantments: [] },
+        slotTwo: { item: spirit.abilities[1], enchantments: [] },
+        slotThree: { item: spirit.abilities[2], enchantments: [] },
+        slotFour: { item: spirit.abilities[3], enchantments: [] },
+        slotFive: { item: spirit.abilities[4], enchantments: [] },
+        slotSix: { item: spirit.abilities[5], enchantments: [] },
+        slotSeven: { item: spirit.abilities[6], enchantments: [] },
+        slotEight: { item: spirit.abilities[7], enchantments: [] },
+        slotNine: { item: spirit.abilities[8], enchantments: [] },
+        slotTen: { item: spirit.abilities[9], enchantments: [] },
+        slotEleven: { item: spirit.abilities[10], enchantments: [] },
+        slotTwelve: { item: spirit.abilities[11], enchantments: [] },
+        slotThirteen: { item: spirit.abilities[12], enchantments: [] },
+        slotFourteen: { item: spirit.abilities[13], enchantments: [] },
+        slotFifteen: { item: spirit.abilities[14], enchantments: [] },
+        slotSixteen: { item: spirit.abilities[15], enchantments: [] },
+        slotSeventeen: { item: spirit.abilities[16], enchantments: [] },
+        slotEighteen: { item: spirit.abilities[17], enchantments: [] },
+        slotNineteen: { item: spirit.abilities[18], enchantments: [] },
+        slotTwenty: { item: spirit.abilities[19], enchantments: [] },
       });
 
       /*
@@ -278,10 +281,16 @@ module.exports = {
         _id: characterId,
         owner: user.id,
         name: charName,
-        place,
-        level: newLevel,
-        alignment: 0,
-        slots: 3,
+        spirit: spirit.name,
+        droprate: 5,
+        tags: [],
+        titles: [],
+        place: locationId,
+        level: spirit.level,
+        cap: 20,
+        alignment: user.purity + spirit.alignment,
+        humanity: user.wisdom + spirit.humanity,
+        slots: spirit.slots,
         attributes: newAttributes,
         buffs: newBuffs,
         debuffs: newDebuffs,
@@ -290,16 +299,20 @@ module.exports = {
         mind: newMind,
         body: newBody,
         soul: newSoul,
-        shield: newShield,
-        health: newHealth,
-        mana: newMana,
-        stamina: newStamina,
-        perks: [],
+        shield: spirit.shield,
+        health: spirit.health,
+        mana: spirit.mana,
+        stamina: spirit.stamina,
+        defRes: spirit.defRes,
+        debuffRes: spirit.debuffRes,
+        perks: spirit.perks,
         effects: [],
+        canEquip: spirit.canEquip,
         equipment: equipmentId,
         inventory: inventoryId,
         familiar: "",
-        skin: skin,
+        skins: spirit.skins,
+        lines: [[]],
         createdAt: new Date().toISOString(),
       });
 
@@ -310,6 +323,30 @@ module.exports = {
       const character = await newCharacter.save();
 
       return character;
+    },
+    async changeSkin(_, { skinIndex, characterId }) {
+      try {
+        if (!characterId.match(/^[0-9a-fA-F]{24}$/)) {
+          throw new Error("Invalid ID");
+        }
+        const character = await Character.findById(characterId);
+        if (character) {
+          if(skinIndex < character.skins[1].length){
+            let newSkin = character.skins[1][skinIndex];            
+            character.skins[0].splice(0, 1);
+            character.skins[0].push(newSkin);
+          } else {
+            throw new Error("Invalid Skin Index")
+          }
+          character.markModified('skins');
+          character.save();
+          return character;
+        } else {
+          throw new Error("Character not found");
+        }
+      } catch (err) {
+        throw new Error(err);
+      }
     },
     async updateCharacterStats(
       _,

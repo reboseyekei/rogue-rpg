@@ -263,7 +263,19 @@ input {
 .subheader {
   text-align: center;
   font-family: "Press Start 2P";
-  font-size: 0.8em;
+  font-size: 0.8em; 
+  margin-top: 0;
+  margin-bottom: 6px;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+.subheader-alternate {
+  text-align: center;
+  font-family: "Piazzolla";
+  font-size: 1.2em; 
   margin-top: 0;
   margin-bottom: 6px;
   -webkit-user-select: none; /* Safari */
@@ -354,6 +366,12 @@ input {
   font-size: 20px;
 }
 
+.stats-text-alternate {
+  font-family: "Piazzolla";
+  color: white;
+  font-size: 20px;
+}
+
 .inventory {
   display: grid;
   gap: 0.5rem;
@@ -363,6 +381,13 @@ input {
   max-width: 360px;
   padding: 10px;
   border-radius: 8px;
+}
+
+.list {
+  display: grid;
+  gap: 0.5rem;
+  grid-auto-rows: 60px;
+  background-color: #222
 }
 
 .slot {
@@ -386,6 +411,11 @@ input {
   pointer-events: none;
   text-align: justify;
   filter: drop-shadow(0 0 6px rgba(0, 0, 0, 1));
+}
+
+.icon {
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(17, 17, 17, 1));
 }
 
 .tooltip {
@@ -470,9 +500,27 @@ input {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 0px;
-
   transition: width 0.5s linear;
+}
+
+.loading {
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.small-text {
+  text-align: center;
+  font-family: "Piazzolla";
+  font-size: 12px; 
+  margin-top: 0;
+  margin-bottom: 1px;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
 }
 
 @media screen and (max-width: 1000px) {

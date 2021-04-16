@@ -1,0 +1,5 @@
+-The client sometimes doesn't load the data fast enough causing there to be a null upon character creation
+-The drag speed of the UI windows is effected by screen size, probably have to make a function of sorts to change the multiplier by the screen size
+-After finalizing stats, the cap resets back to 0 used. Fixes upon open and close
+-Some text is blurred, imagining this has to do with aspect ratios
+-Font size isn't set at all, and isn't applying correctly

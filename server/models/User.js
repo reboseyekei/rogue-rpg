@@ -2,23 +2,18 @@ const { model, Schema } = require("mongoose");
 const { enterprise } = require("./_Objects");
 
 const userSchema = new Schema({
-  email: String,
-  password: String,
-  username: String,
-  characters: [String],
-  familiars: [String],
-  gold: Number,
-  vault: [String],
-  library: [String],
-  laboratory: [String],
-  shop: enterprise,
-  auction: enterprise,
-  guild: enterprise,
-  smith: enterprise,
-  manor: enterprise,
-  palace: enterprise,
-  caravan: enterprise,
-  createdAt: String,
+    email: String,
+    password: String,
+    username: String,
+    characters: [String],
+    familiars: [String],
+    essence: Number,
+    purity: Number,
+    wisdom: Number,
+    vault: [String],
+    locations: [String],
+    spirits: [String],
+    createdAt: String,
 });
 
 module.exports = model("User", userSchema);
