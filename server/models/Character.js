@@ -1,5 +1,5 @@
 const { model, Schema } = require("mongoose");
-const { attributes, buffs, debuffs, mind, body, soul, level, division, effect} = require("./_Objects");
+const { attributes, buffs, debuffs, mind, body, soul, level, division, appliedEffect} = require("./_Objects");
 
 const characterSchema = new Schema({
   owner: String,
@@ -29,13 +29,14 @@ const characterSchema = new Schema({
   defRes: Number,
   debuffRes: Number,
   perks: [String],
-  effects: [effect],
+  effects: [appliedEffect],
   canEquip: Number,
   equipment: String,
   inventory: String,
   familiar: String,
   skins: [[String]],
   lines: [[String]],
+  ai: String,
 });
 
 module.exports = model("Character", characterSchema);

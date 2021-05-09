@@ -297,6 +297,12 @@ module.exports = gql`
     turns: Int!
     modifiers: [ModifierInput]
   }
+  type AppliedEffect {
+    name: String!
+    turns: Int!
+    modifiers: [[String]]!
+    values: [Int]!
+  }
   type Ability {
     id: ID!
     tag: String!
@@ -407,6 +413,16 @@ module.exports = gql`
     ringTwo: ModItem
     rightHand: ModItem
     leftHand: ModItem
+  }
+  input EquipmentInput {
+    head: ModItemInput
+    upperBody: ModItemInput
+    lowerBody: ModItemInput
+    feet: ModItemInput
+    ringOne: ModItemInput
+    ringTwo: ModItemInput
+    rightHand: ModItemInput
+    leftHand: ModItemInput
   }
   type Equips {
     head: Item
@@ -618,7 +634,7 @@ module.exports = gql`
     defRes: Int!
     debuffRes: Int!
     perks: [String]
-    effects: [Effect]
+    effects: [AppliedEffect]
     canEquip: Int!
     equipment: String!
     inventory: String!
@@ -635,19 +651,22 @@ module.exports = gql`
     """
     skins: [[String]]!
     lines: [[String]]
+    ai: String
   }
 
   type CharacterOutput {
     id: ID!
     name: String!
     level: Int!
+    humanity: Int!
+    alignment: Int!
     spirit: String!
     skin: String!
     health: Division!
     mana: Division!
     stamina: Division!
     shield: Division!
-    effects: [Effect]
+    effects: [AppliedEffect]!
   }
 
   input CreateCharacterInput {
@@ -775,7 +794,7 @@ module.exports = gql`
     debuffRes: Int
     perks: [String]
     effects: [Effect]
-    equipment: [String]
+    equipment: Equipment
     canEquip: Int!
     items: [String]
     skins: [String]!
@@ -808,7 +827,7 @@ module.exports = gql`
     debuffRes: Int
     perks: [String]
     effects: [EffectInput]
-    equipment: [String]
+    equipment: EquipmentInput
     canEquip: Int!
     items: [String]
     skins: [String]!
@@ -883,6 +902,11 @@ module.exports = gql`
     template: MonsterTemplate
   }
 
+  type Votes {
+    actions: [String]
+    data: [[String]]
+  }
+
   type Dungeon {
     id: ID!
     name: String!
@@ -891,26 +915,44 @@ module.exports = gql`
     currFloor: Int!
     currRoom: Int!
     leadingTo: [Int]
+    leadingToVote: [[String]]
+    actions: Votes
     chaos: Int!
     droprate: Int!
     occupants: [String]
     players: [String]
-    turn: [Int]
+    loot: String
+    turn: [[String]]
     totalTokens: [Int]
     tokens: [Int]
     tokenDistribution: [Int]
     return: String!
     log: [String]
+    timestamp: [String]
+    active: [String]
+  }
+
+  type DestinationOutput {
+    environment: String!
+    vote: [String]
   }
 
   type DungeonOutput {
-    room: Room,
+    id: ID!
+    room: Room
     occupants: [CharacterOutput]
     players: [CharacterOutput]
     playerIds: [String]
+    leadingRooms: [DestinationOutput]
+    actions: Votes
     tokens: [String]
     tokenDistribution: [String]
     totalTokens: [String]
+    log: [String]
+    timestamp: [String]
+    turn: [[String]]
+    active: [String]
+    loot: String
   }
 
   input CreateDungeonInput {
@@ -957,7 +999,7 @@ module.exports = gql`
     getAreas(locationId: ID!): [AreaTemplate]
     getPlayers(dungeonId: ID!): [Character]
     getRoom(dungeonId: ID!, floor: Int!, room: Int!): Room
-    getDungeonOutput(dungeonId: ID!): DungeonOutput
+    getDungeonOutput(dungeonId: ID!, characterId: ID!): DungeonOutput
   }
   type Mutation {
     register(registerInput: RegisterInput): User!
@@ -998,6 +1040,9 @@ module.exports = gql`
     kickParty(partyId: ID!, characterId: ID!): String
     updatePartyToken(partyId: ID!, newTokenDist: [Int]!): Party
     disbandParty(partyId: ID!): String!
+    roomVote(index: Int!, action: String!, characterId: ID!, dungeonId: ID!): Dungeon
+    actionVote(index: Int!, action: String!, characterId: ID!, dungeonId: ID!): Dungeon
+    sendAbility(characterId: ID!, dungeonId: ID!, slot: String!): String
   }
   type Subscription {
     locationConnect(locationId: ID!): Character!

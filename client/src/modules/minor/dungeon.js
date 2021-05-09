@@ -15,7 +15,6 @@ import "../styles/base.css";
 export default function Dungeon() {
   //Context
   const charContext = useContext(CharacterContext);
-  console.log(charContext.place);
 
   //Graphql
   const { loading: dungeonLoad, data: dungeonData } = useQuery(FETCH_DUNGEON, { variables: { dungeonId: charContext.place } });

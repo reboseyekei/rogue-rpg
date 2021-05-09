@@ -131,6 +131,13 @@ const effect = new Schema({
   modifiers: [modifier],
 });
 
+const appliedEffect = new Schema({
+  name: String,
+  turns: Number,
+  modifiers: [[String]],
+  values: [Number],
+})
+
 const perk = new Schema({
   name: String,
   desc: String,
@@ -288,6 +295,11 @@ const room = new Schema({
   template: monsterTemplate,
 })
 
+const votes = new Schema({
+  actions: [String],
+  data: [[String]]
+})
+
 module.exports = {
   resistance,
   enchantment,
@@ -304,6 +316,7 @@ module.exports = {
   scale,
   modifier,
   effect,
+  appliedEffect,
   perk,
   ability,
   item,
@@ -316,4 +329,5 @@ module.exports = {
   division,
   monsterTemplate,
   room,
+  votes,
 };

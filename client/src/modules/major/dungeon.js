@@ -14,6 +14,7 @@ import Equipment from "../minor/equipment";
 import Character from "../minor/character";
 import Dungeon from "../minor/dungeon";
 import Players from "../minor/players";
+import Occupant from "../minor/occupant";
 import DungeonUI from "../minor/dungeonui";
 
 //Contexts
@@ -54,9 +55,9 @@ export default function Settlement() {
   let isPlace = character.place ? false : true;
   const { loading: characterLoad, data: characterData, refetch } = useQuery(FETCH_CHARACTER, { variables: { characterId }, pollInterval: 500 });
   const { loading: dungeonLoad, data: dungeonData } = useQuery(FETCH_DUNGEON_OUTPUT, {
-    variables: { dungeonId: character.place },
+    variables: { dungeonId: character.place, characterId: character.characterId},
     skip: isPlace,
-    pollInterval: 500,
+    pollInterval: 100,
   });
 
   //Getting equipped items, important for applying stats without renders (Lazy Query)
@@ -90,11 +91,14 @@ export default function Settlement() {
           {dungeonData ? (
             <Grid container alignContent="space-between" style={{ height: "100%" }}>
               <Grid item xs={4} style={{height: "42.5%"}}>
-                <DungeonUI dungeon={dungeonData.getDungeonOutput}/>
+                <DungeonUI dungeon={dungeonData.getDungeonOutput} dungeonLoad={dungeonLoad}/>
               </Grid>
-              <Grid item xs={8}></Grid>
+              <Grid item xs={1}></Grid>
+              <Grid item xs={7}>
+                {dungeonData.getDungeonOutput.occupants[0] ? <Occupant occupant={dungeonData.getDungeonOutput.occupants[0]} turn={dungeonData.getDungeonOutput.turn}/> : ""}
+              </Grid>
               <Grid item xs={12}>
-                <Players players={dungeonData.getDungeonOutput.players} />
+                <Players players={dungeonData.getDungeonOutput.players} turn={dungeonData.getDungeonOutput.turn}/>
               </Grid>
             </Grid>
           ) : (
@@ -146,8 +150,8 @@ export default function Settlement() {
 }
 
 const FETCH_DUNGEON_OUTPUT = gql`
-  query($dungeonId: ID!) {
-    getDungeonOutput(dungeonId: $dungeonId) {
+  query($dungeonId: ID!, $characterId: ID!) {
+    getDungeonOutput(dungeonId: $dungeonId, characterId: $characterId) {
       room {
         environment
         lifespan
@@ -179,12 +183,43 @@ const FETCH_DUNGEON_OUTPUT = gql`
         }
       }
       occupants {
+        id
         name
+        spirit
+        level
+        skin
+        alignment
+        health {
+          max
+          current
+        }
+        mana {
+          max
+          current
+        }
+        stamina {
+          max
+          current
+        }
+        shield {
+          max
+          current
+        }
       }
+      log
       tokens
       tokenDistribution
       totalTokens
       playerIds
+      actions {
+        actions
+        data
+      }
+      leadingRooms {
+        environment
+        vote
+      }
+      turn
     }
   }
 `;

@@ -58,12 +58,11 @@ export default function Party() {
   //Display
   const [selected, setSelected] = useState({
     party: true,
-    tokens: false,
     lookup: false,
   });
 
   const select = (target) => {
-    setSelected({ party: false, tokens: false, lookup: false, [target]: true });
+    setSelected({ party: false, lookup: false, [target]: true });
   };
 
   const backgroundCalc = (target) => {
@@ -105,22 +104,6 @@ export default function Party() {
                 </button>
               </Grid>
             </Grid>
-          </div>
-        </div>
-      );
-    } else if (selected.tokens) {
-      return (
-        <div style={{ paddingTop: "5px", paddingLeft: "5px", paddingRight: "5px" }}>
-          <div style={{ display: "block", height: "45px" }}>
-            <div style={{ paddingTop: "20px", marginLeft: "auto", marginRight: "auto" }}>
-              <span className="subheader" style={{ fontSize: "20px" }}>
-                Tokens (WIP)
-              </span>
-            </div>
-          </div>
-          <div className="divider"></div>
-          <div className="inner-scrollbar" style={{ padding: "10px", height: "440px" }}>
-            {character.party ? "display token meaning" : "something for leaders only"}
           </div>
         </div>
       );
@@ -204,13 +187,6 @@ export default function Party() {
           onClick={() => select("party")}
         >
           party
-        </button>
-        <button
-          className="submit-button"
-          style={{ float: "initial", width: "100px", marginLeft: "5px", cursor: "pointer", backgroundColor: backgroundCalc("tokens") }}
-          onClick={() => select("tokens")}
-        >
-          tokens
         </button>
         <button
           className="submit-button"

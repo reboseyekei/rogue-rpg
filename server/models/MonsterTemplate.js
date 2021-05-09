@@ -1,5 +1,5 @@
 const { model, Schema } = require("mongoose");
-const {attributes, buffs, debuffs, mind, body, soul, division, effect, level} = require("./_Objects");
+const {attributes, buffs, debuffs, mind, body, soul, division, effect, level, equipment} = require("./_Objects");
 
 const monsterTemplateSchema = new Schema({
     name: String,
@@ -26,7 +26,7 @@ const monsterTemplateSchema = new Schema({
     perks: [String],
     effects: [effect],
     canEquip: Number,
-    equipment: [String],
+    equipment: equipment,
     items: [String],
     skins: [String],
 });

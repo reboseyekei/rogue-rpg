@@ -26,5 +26,10 @@ integrate: cap, place, location, humanity, canEquip, defRes, debuffRes, skins, l
 -add a rest button
 -use party data in dungeons.js (minor module) to client side block people in parties from entering trials
 -add validation to dungeon creation (dungeon creation should have more checks if it should actually create on the server command)
+-add some security to rest and embark (dungeon.js)
+-optimize passing turn code (gets character data like 4 times)
+-allow displaying multiple occupants
+-add embarking flavor text to log
+-add buffs and debuffs to stat calculations
 
 

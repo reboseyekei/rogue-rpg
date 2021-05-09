@@ -10,7 +10,7 @@ import { CharacterContext } from "../../helper/character";
 //Styles
 import "../styles/base.css";
 
-export default function Players({ players }) {
+export default function Players({ players, turn}) {
   const character = useContext(CharacterContext);
 
   const getWidth = (healthMax, manaMax, staminaMax, shieldMax) => {
@@ -50,51 +50,51 @@ export default function Players({ players }) {
 
     return (
       <Grid item xs={2} key={player.id}>
-        <div style={{ borderRadius: "5px", border: "2px solid #111", padding: "10px", height: "100%"}}>
+        <div style={{ borderRadius: "5px", border: player.id === turn[0][0] ? "2px solid #918959" : "2px solid #111", padding: "10px", height: "100%" }}>
           <h1 className="subheader">{player.name}</h1>
           <img
             src={require(`../../assets/skins/${player.skin}.jpg`)}
-            style={{ width: "100%", borderRadius: "5px" }}
+            style={{ width: "80%", borderRadius: "5px" }}
             alt={`character graphic for ${player.name}`}
           />
-          <div style={{ marginTop: "10px" }}>
-            <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "8px" }}>
-              {`Health: ${player.health.current}/${player.health.max}`}
+          <div style={{ marginTop: "4px", border: "2px solid #111", padding: "3px", borderRadius: "4px" }}>
+            <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "2px" }}>
+              {`${player.health.current}/${player.health.max} - Health`}
             </h1>
             <div className="stat-bar" style={{ width: measures.healthMeasure, marginRight: "auto" }}>
               <div className="bar" style={{ background: "#c54" }}>
-                <div className="hit" style={{ width: `${(1 - player.health.current / player.health.max)*100}%` }}></div>
+                <div className="hit" style={{ width: `${(1 - player.health.current / player.health.max) * 100}%` }}></div>
               </div>
             </div>
           </div>
-          <div style={{ marginTop: "10px" }}>
-            <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "8px" }}>
-              {`Mana: ${player.mana.current}/${player.mana.max}`}
+          <div style={{ marginTop: "4px", border: "2px solid #111", padding: "3px", borderRadius: "4px" }}>
+            <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "2px" }}>
+              {`${player.mana.current}/${player.mana.max} - Mana`}
             </h1>
             <div className="stat-bar" style={{ width: measures.manaMeasure, marginRight: "auto" }}>
               <div className="bar" style={{ background: "#4474cc" }}>
-                <div className="hit" style={{ width: `${(1 - player.mana.current / player.mana.max)*100}%` }}></div>
+                <div className="hit" style={{ width: `${(1 - player.mana.current / player.mana.max) * 100}%` }}></div>
               </div>
             </div>
           </div>
-          <div style={{ marginTop: "10px" }}>
-            <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "8px" }}>
-              {`Stamina: ${player.stamina.current}/${player.stamina.max}`}
+          <div style={{ marginTop: "4px", border: "2px solid #111", padding: "3px", borderRadius: "4px" }}>
+            <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "2px" }}>
+              {`${player.stamina.current}/${player.stamina.max} - Stamina`}
             </h1>
             <div className="stat-bar" style={{ width: measures.staminaMeasure, marginRight: "auto" }}>
               <div className="bar" style={{ background: "#44cc64" }}>
-                <div className="hit" style={{ width: `${(1 - player.stamina.current / player.stamina.max)*100}%` }}></div>
+                <div className="hit" style={{ width: `${(1 - player.stamina.current / player.stamina.max) * 100}%` }}></div>
               </div>
             </div>
           </div>
           {measures.shieldMeasure !== "0%" && (
-            <div style={{ marginTop: "10px" }}>
-              <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "8px" }}>
-                {`Shield: ${player.shield.current}/${player.shield.max}`}
+            <div style={{ marginTop: "4px", border: "2px solid #111", padding: "3px", borderRadius: "5px" }}>
+              <h1 className="subheader" style={{ fontSize: "10px", textAlign: "left", marginLeft: "2px" }}>
+                {`${player.shield.current}/${player.shield.max} - Shield`}
               </h1>
               <div className="stat-bar" style={{ width: measures.shieldMeasure, marginRight: "auto" }}>
                 <div className="bar" style={{ background: "#7132a8" }}>
-                  <div className="hit" style={{ width: `${(1 - player.shield.current / player.shield.max)*100}%` }}></div>
+                  <div className="hit" style={{ width: `${(1 - player.shield.current / player.shield.max) * 100}%` }}></div>
                 </div>
               </div>
             </div>

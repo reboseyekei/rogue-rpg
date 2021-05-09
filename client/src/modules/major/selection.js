@@ -41,7 +41,7 @@ export default function Selection() {
 
   //GRAPHQL FUNCTIONS
   const { loading: charactersLoad, data: charactersData } = useQuery(FETCH_CHARACTERS, { variables: { userId }, pollInterval: 500 });
-  const { loading: placesLoad, data: placesData, refetch} = useQuery(FETCH_PLACES, { variables: { userId }, fetchPolicy: 'no-cache'});
+  const { loading: placesLoad, data: placesData, refetch } = useQuery(FETCH_PLACES, { variables: { userId }, fetchPolicy: "no-cache" });
 
   useEffect(() => {
     setReset(Math.random());
@@ -73,21 +73,26 @@ export default function Selection() {
       <section className="basic-grid" key={reset}>
         {charactersLoad && placesLoad
           ? ""
-          : charactersData.getCharacters &&
-            placesData && !open &&
+          : !charactersLoad &&
+            charactersData.getCharacters &&
+            !placesLoad &&
+            placesData.getPlaces &&
+            !open &&
             charactersData.getCharacters.map((character) => (
               <div
                 className="card"
                 key={character.id}
                 onClick={() => {
-                  context.setCharacter({ id: character.id, skins: character.skins, place: character.place });
-                  let places = placesData.getPlaces;
-                  placeContext.place({
-                    placeId: character.place,
-                    type: places.data[findPlace(places, character.place)].desc ? "location" : "dungeon",
-                    name: places.data[findPlace(places, character.place)].name,
-                    desc: places.data[findPlace(places, character.place)].desc,
-                  });
+                  if (placesData.getPlaces.data[findPlace(placesData.getPlaces, character.place)]) {
+                    context.setCharacter({ id: character.id, skins: character.skins, place: character.place });
+                    let places = placesData.getPlaces;
+                    placeContext.place({
+                      placeId: character.place,
+                      type: places.data[findPlace(places, character.place)].desc ? "location" : "dungeon",
+                      name: places.data[findPlace(places, character.place)].name,
+                      desc: places.data[findPlace(places, character.place)].desc,
+                    });
+                  }
                 }}
               >
                 <img
@@ -98,7 +103,9 @@ export default function Selection() {
                 <h5 style={{ fontFamily: "Piazzolla", marginBottom: "0" }}>{character.name}</h5>
                 <div style={{ marginTop: "0", fontFamily: "Press Start 2P", fontSize: ".25em", textAlign: "center" }}>
                   <p style={{ height: "30px" }}>
-                    {placesData.getPlaces.data[findPlace(placesData.getPlaces, character.place)].name}
+                    {placesData.getPlaces.data[findPlace(placesData.getPlaces, character.place)]
+                      ? placesData.getPlaces.data[findPlace(placesData.getPlaces, character.place)].name
+                      : "Loading..."}
                   </p>
                   <p>{`level: ${character.level.lvl}`}</p>
                 </div>
@@ -108,7 +115,7 @@ export default function Selection() {
           <img src={plus} style={{ width: "200px", height: "200px" }} alt="create a new character" />
           <h5 style={{ fontFamily: "Piazzolla", marginBottom: "0" }}>New Character</h5>
         </div>
-        <CharCreation open={open} handleClose={handleClose}/>
+        <CharCreation open={open} handleClose={handleClose} />
       </section>
     </div>
   );

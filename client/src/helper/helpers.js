@@ -189,7 +189,7 @@ function sum(ob1, ob2) {
     },
     body: {
       cap: 0 + ob1.body.cap + ob2.body.cap,
-      vitality: 0 + ob1.body.vitality + ob2.body.defense,
+      vitality: 0 + ob1.body.vitality + ob2.body.vitality,
       defense: 0 + ob1.body.defense + ob2.body.defense,
       strength: 0 + ob1.body.strength + ob2.body.strength,
       dexterity: 0 + ob1.body.dexterity + ob2.body.dexterity,
@@ -1012,12 +1012,18 @@ function parseSlottedAbility(slot, character, equipped) {
     targets.push(parseTarget(slot.ability, fields[i]));
   }
 
+  console.log(fields)
+  console.log(targets)
+
+
   //Looping through each field
   for (let i = 0; i < fields.length; i++) {
     if (Array.isArray(targets[i])) {
       if (fields[i] === "repeatable") {
         let extra = [];
         let extraValues = [];
+        console.log(extra);
+        console.log(extraValues)
         for (let scope = 0; scope < fields.length; scope++) {
           if (fields[scope] === "mindRepeat" || fields[scope] === "bodyRepeat" || fields[scope] === "soulRepeat") {
             extra.push(fields[scope]);
@@ -1038,6 +1044,8 @@ function parseSlottedAbility(slot, character, equipped) {
     }
   }
 
+
+
   return details;
 }
 
@@ -1056,9 +1064,6 @@ function slottedAbilityDetails(slot, character, equipped) {
   }
 
   let fieldCount = 0;
-
-  console.log(details[3]);
-  console.log(fields);
 
   for (let i = 0; i < details.length; i++) {
     if (integers.includes(fields[fieldCount])) {

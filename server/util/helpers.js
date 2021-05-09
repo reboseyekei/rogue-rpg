@@ -65,7 +65,7 @@ function sum(ob1, ob2) {
     },
     body: {
       cap: 0 + ob1.body.cap + ob2.body.cap,
-      vitality: 0 + ob1.body.vitality + ob2.body.defense,
+      vitality: 0 + ob1.body.vitality + ob2.body.vitality,
       defense: 0 + ob1.body.defense + ob2.body.defense,
       strength: 0 + ob1.body.strength + ob2.body.strength,
       dexterity: 0 + ob1.body.dexterity + ob2.body.dexterity,

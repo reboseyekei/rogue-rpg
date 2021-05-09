@@ -4,7 +4,7 @@ const inventoriesResolvers = require("./inventories");
 const equipmentsResolvers = require("./equipments");
 const itemsResolvers = require("./items");
 const abilitiesResolvers = require("./abilities");
-const dungeonResolvers = require("./dungeon");
+const dungeonResolvers = require("./dungeons");
 const locationsResolvers = require("./locations");
 const adminsResolvers = require("./admins");
 

@@ -1,5 +1,5 @@
 //General
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect} from "react";
 import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
@@ -152,8 +152,6 @@ export default function Stats({ characterId, refetch, refreshData }) {
     refetch();
     if (!characterLoad || !refreshData) {
       resetStat();
-      console.log("ape");
-      resetStat();
     }
     setRerender(Math.random());
   }
@@ -201,10 +199,19 @@ export default function Stats({ characterId, refetch, refreshData }) {
 
   let debuffResistance = character.soul.will * 2 + character.body.defense * 0.5;
 
+  const displayCap = (anchor) => {
+    return <span className="subheader">{`:${stat[anchor].capUsed}/${character[anchor].cap + stat[anchor].cap}`}</span>;
+  };
+
+  useEffect(() => {
+    resetStat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [character]);
+
   const viewManager = () => {
     if (selected.stats) {
       return (
-        <div style={{ paddingTop: "5px", paddingLeft: "5px", paddingRight: "5px" }}>
+        <div key={rerender} style={{ paddingTop: "5px", paddingLeft: "5px", paddingRight: "5px" }}>
           <div style={{ display: "block", height: "45px" }}>
             <div style={{ backgroundColor: "#111", borderRadius: "5px", width: "120px", height: "40px", float: "left" }}>
               <div style={{ float: "left" }}>
@@ -231,7 +238,7 @@ export default function Stats({ characterId, refetch, refreshData }) {
           <div className="divider"></div>
           <div className="inner-scrollbar" style={{ padding: "10px", height: "400px" }}>
             {anchors.map((anchor, index) => (
-              <div style={{ marginBottom: "10px" }} key={`${anchor}-${index}`}>
+              <div style={{ marginBottom: "10px" }} key={`${anchor}-${index}-${rerender}`}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignContent: "center", height: "30px", marginBottom: "10px" }}>
                   <h1 className="subheader" style={{ fontSize: "18px", marginTop: "10px", float: "left", textTransform: "capitalize" }}>
                     {anchor}
