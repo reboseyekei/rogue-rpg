@@ -313,6 +313,7 @@ module.exports = {
         familiar: "",
         skins: spirit.skins,
         lines: [[]],
+        ai: "mob",
         createdAt: new Date().toISOString(),
       });
 

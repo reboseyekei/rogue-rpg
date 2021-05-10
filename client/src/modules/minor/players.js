@@ -45,8 +45,22 @@ export default function Players({ players, turn}) {
     return { healthMeasure, manaMeasure, staminaMeasure, shieldMeasure };
   };
 
+  const calcHit = (curr, max) => {
+    if(curr > max){
+      return "0%"
+    } else if(curr <= 0){
+      return "100%"
+    } else {
+      return `${(1 - curr / max) * 100}%`
+    }
+  }
+
   const playerDisplay = (player) => {
     let measures = getWidth(player.health.max, player.mana.max, player.stamina.max, player.shield.max);
+    let healthHit = calcHit(player.health.current, player.health.max);
+    let manaHit = calcHit(player.mana.current, player.mana.max);
+    let staminaHit = calcHit(player.stamina.current, player.stamina.max);
+    let shieldHit = calcHit(player.shield.current, player.shield.max);
 
     return (
       <Grid item xs={2} key={player.id}>
@@ -63,7 +77,7 @@ export default function Players({ players, turn}) {
             </h1>
             <div className="stat-bar" style={{ width: measures.healthMeasure, marginRight: "auto" }}>
               <div className="bar" style={{ background: "#c54" }}>
-                <div className="hit" style={{ width: `${(1 - player.health.current / player.health.max) * 100}%` }}></div>
+                <div className="hit" style={{ width: healthHit }}></div>
               </div>
             </div>
           </div>
@@ -73,7 +87,7 @@ export default function Players({ players, turn}) {
             </h1>
             <div className="stat-bar" style={{ width: measures.manaMeasure, marginRight: "auto" }}>
               <div className="bar" style={{ background: "#4474cc" }}>
-                <div className="hit" style={{ width: `${(1 - player.mana.current / player.mana.max) * 100}%` }}></div>
+                <div className="hit" style={{ width: manaHit }}></div>
               </div>
             </div>
           </div>
@@ -83,7 +97,7 @@ export default function Players({ players, turn}) {
             </h1>
             <div className="stat-bar" style={{ width: measures.staminaMeasure, marginRight: "auto" }}>
               <div className="bar" style={{ background: "#44cc64" }}>
-                <div className="hit" style={{ width: `${(1 - player.stamina.current / player.stamina.max) * 100}%` }}></div>
+                <div className="hit" style={{ width: staminaHit }}></div>
               </div>
             </div>
           </div>
@@ -94,7 +108,7 @@ export default function Players({ players, turn}) {
               </h1>
               <div className="stat-bar" style={{ width: measures.shieldMeasure, marginRight: "auto" }}>
                 <div className="bar" style={{ background: "#7132a8" }}>
-                  <div className="hit" style={{ width: `${(1 - player.shield.current / player.shield.max) * 100}%` }}></div>
+                  <div className="hit" style={{ width: shieldHit }}></div>
                 </div>
               </div>
             </div>

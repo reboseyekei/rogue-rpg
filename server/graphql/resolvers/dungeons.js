@@ -53,6 +53,7 @@ const slotList = [
   "slotFive",
   "slotSix",
   "slotSeven",
+  "slotEight",
   "slotNine",
   "slotTen",
   "slotEleven",
@@ -61,7 +62,7 @@ const slotList = [
   "slotFourteen",
   "slotFifteen",
   "slotSixteen",
-  "slotOSeventeen",
+  "slotSeventeen",
   "slotEighteen",
   "slotNineteen",
   "slotTwenty",
@@ -164,11 +165,79 @@ function sortArray(ids, initiatives) {
   return sorted;
 }
 
+async function destroyCharacter(characterId, isPlayer) {
+  if (!characterId.match(/^[0-9a-fA-F]{24}$/)) {
+    throw new Error("Invalid ID");
+  }
+
+  const character = await Character.findById(characterId);
+
+  if (character) {
+    if (isPlayer) {
+      //First step, removing it from the user that owns the character
+      const user = await User.findById(character.owner);
+      user.characters.splice(user.characters.indexOf(characterId), 1);
+
+      //Second Step, removing the character from the party
+      const party = await Party.findById(character.party);
+      party.characters.splice(party.characters.indexOf(characterId), 1);
+
+      //Third step, removing the character from the dungeon
+      if (dungeon.players.length === 1) {
+        //If there is only one person in the dungeon just delete the dungeon
+        await Dungeon.findByIdAndDelete(character.place);
+      } else {
+        //If there is more than one person than remove that player from the dungeon
+        const dungeon = await Dungeon.findById(character.place);
+        const charIndex = dungeon.players.indexOf(characterId);
+        dungeon.players.splice(charIndex, 1);
+
+        //Remove the player from the turn list
+        let turnIndex = dungeon.turn[1].indexOf(characterId);
+        dungeon.turn[1].splice(turnIndex, 1);
+
+        if (dungeon.turn[0][0] === characterId) {
+          //If it was the dead players turn
+          nextTurn(character.place);
+        }
+        await Dungeon.findByIdAndUpdate(character.place, { turn: dungeon.turn, players: dungeon.players });
+      }
+    } else {
+      const dungeon = await Dungeon.findById(character.owner);
+      dungeon.occupants.splice(dungeon.occupants.indexOf(characterId), 1);
+      //Remove the occupant from the turn list
+      let turnIndex = dungeon.turn[1].indexOf(characterId);
+      dungeon.turn[1].splice(turnIndex, 1);
+
+      if (dungeon.turn[0][0] === characterId) {
+        //If it was the dead players turn
+        nextTurn(character.owner);
+      }
+      await Dungeon.findByIdAndUpdate(character.owner, { turn: dungeon.turn, occupants: dungeon.occupants });
+    }
+
+    //Second Step, deleting the inventory, abilitiesInv, and equipment
+    await Inventory.findByIdAndDelete(character.inventory);
+    await Equipment.findByIdAndDelete(character.equipment);
+    await AbilitiesInv.findByIdAndDelete(character.abilitiesInv);
+    character.delete();
+  } else {
+    throw new Error("Character cannot be found");
+  }
+}
+
 async function getAbilityData(itemId) {
   const item = await Item.findById(itemId);
   const ability = await Ability.findById(item.ability);
   if (item && ability) {
     return ability;
+  }
+}
+
+async function getItemData(itemId) {
+  const item = await Item.findById(itemId);
+  if (item) {
+    return item;
   }
 }
 
@@ -330,229 +399,224 @@ function calcMultiplier(character, scale) {
 }
 
 async function useAbility(charData, abilityData, dungeon, isPlayer) {
-  //Checks if the player can use the ability
-  let canUse = checkReqs(charData, abilityData);
-  if (canUse) {
-    //Getting the character
-    const character = await Character.findById(charData.id);
+  //Getting the character
+  const character = await Character.findById(charData.id);
 
-    //Applying the ability costs
-    if (abilityData.healthCost) {
-      character.health.current -= abilityData.healthCost;
-    }
-    if (abilityData.manaCost) {
-      character.mana.current -= abilityData.manaCost;
-    }
-    if (abilityData.staminaCost) {
-      character.stamina.current -= abilityData.staminaCost;
-    }
-    if (abilityData.shieldCost) {
-      character.shield.current -= abilityData.shieldCost;
-    }
+  //Applying the ability costs
+  if (abilityData.healthCost) {
+    character.health.current -= abilityData.healthCost;
+  }
+  if (abilityData.manaCost) {
+    character.mana.current -= abilityData.manaCost;
+  }
+  if (abilityData.staminaCost) {
+    character.stamina.current -= abilityData.staminaCost;
+  }
+  if (abilityData.shieldCost) {
+    character.shield.current -= abilityData.shieldCost;
+  }
 
-    let damage = 0;
-    let healthGain = 0;
-    let manaGain = 0;
-    let staminaGain = 0;
-    let shieldGain = 0;
+  let damage = 0;
+  let healthGain = 0;
+  let manaGain = 0;
+  let staminaGain = 0;
+  let shieldGain = 0;
 
-    if (abilityData.damage) {
-      damage = abilityData.damage.value;
-      if (abilityData.damage.scaled) {
-        damage *= calcMultiplier(charData, abilityData.damage);
-      }
+  if (abilityData.damage) {
+    damage = abilityData.damage.value;
+    if (abilityData.damage.scaled) {
+      damage *= calcMultiplier(charData, abilityData.damage);
     }
-    if (abilityData.healthGain) {
-      healthGain = abilityData.healthGain.value;
-      if (abilityData.healthGain.scaled) {
-        healthGain *= calcMultiplier(charData, abilityData.healthGain);
-      }
+  }
+  if (abilityData.healthGain) {
+    healthGain = abilityData.healthGain.value;
+    if (abilityData.healthGain.scaled) {
+      healthGain *= calcMultiplier(charData, abilityData.healthGain);
     }
-    if (abilityData.manaGain) {
-      manaGain = abilityData.manaGain.value;
-      if (abilityData.manaGain.scaled) {
-        manaGain *= calcMultiplier(charData, abilityData.manaGain);
-      }
+  }
+  if (abilityData.manaGain) {
+    manaGain = abilityData.manaGain.value;
+    if (abilityData.manaGain.scaled) {
+      manaGain *= calcMultiplier(charData, abilityData.manaGain);
     }
-    if (abilityData.staminaGain) {
-      staminaGain = abilityData.staminaGain.value;
-      if (abilityData.staminaGain.scaled) {
-        staminaGain *= calcMultiplier(charData, abilityData.staminaGain);
-      }
+  }
+  if (abilityData.staminaGain) {
+    staminaGain = abilityData.staminaGain.value;
+    if (abilityData.staminaGain.scaled) {
+      staminaGain *= calcMultiplier(charData, abilityData.staminaGain);
     }
-    if (abilityData.shieldGain) {
-      shieldGain = abilityData.shieldGain.value;
-      if (abilityData.shieldGain.scaled) {
-        shieldGain *= calcMultiplier(charData, abilityData.shieldGain);
-      }
+  }
+  if (abilityData.shieldGain) {
+    shieldGain = abilityData.shieldGain.value;
+    if (abilityData.shieldGain.scaled) {
+      shieldGain *= calcMultiplier(charData, abilityData.shieldGain);
     }
+  }
 
-    //How many times an ability will repeat
-    let repeat = 1;
-    if (abilityData.repeatable) {
-      let mult = 1;
-      if (abilityData.mindRepeat) mult += calcCategoryMult("mindRepeat", character.mind, scale.mindRepeat);
-      if (abilityData.bodyRepeat) mult += calcCategoryMult("bodyRepeat", character.mind, scale.bodyRepeat);
-      if (abilityData.soulRepeat) mult += calcCategoryMult("soulRepeat", character.mind, scale.soulRepeat);
-      repeat *= mult;
-      if (repeat > abilityData.repeatable.max) {
-        repeat = abilityData.repeatable.max;
-      }
+  //How many times an ability will repeat
+  let repeat = 1;
+  if (abilityData.repeatable) {
+    let mult = 1;
+    if (abilityData.mindRepeat) mult += calcCategoryMult("mindRepeat", character.mind, abilityData.mindRepeat);
+    if (abilityData.bodyRepeat) mult += calcCategoryMult("bodyRepeat", character.mind, abilityData.bodyRepeat);
+    if (abilityData.soulRepeat) mult += calcCategoryMult("soulRepeat", character.mind, abilityData.soulRepeat);
+    repeat *= mult;
+    if (repeat > abilityData.repeatable.max) {
+      repeat = abilityData.repeatable.max;
     }
+  }
 
-    let target;
+  let target;
+  if (isPlayer) {
+    target = await Character.findById(dungeon.occupants[0]);
+  } else {
+    let randomPlayer = Math.floor(Math.random() * dungeon.players.length);
+    target = await Character.findById(dungeon.players[randomPlayer]);
+  }
+  for (let i = 0; i < repeat; i++) {
     if (isPlayer) {
-      target = await Character.findById(dungeon.occupants[0]);
-    } else {
-      let randomPlayer = Math.floor(Math.random() * dungeon.players.length);
-      target = await Character.findById(dungeon.players[randomPlayer]);
-    }
-    for (let i = 0; i < repeat; i++) {
-      if (isPlayer) {
-        if (abilityData.target === 0) {
-          character.health.current -= damage;
+      if (abilityData.target === 0) {
+        character.health.current -= damage;
+        character.health.current += healthGain;
+        character.mana.current += manaGain;
+        character.stamina.current += staminaGain;
+        character.shield.current += shieldGain;
+      } else if (abilityData.target > 0) {
+        if (abilityData.target === 1 || abilityData.target === 2) {
+          target.health.current -= damage;
           character.health.current += healthGain;
           character.mana.current += manaGain;
           character.stamina.current += staminaGain;
           character.shield.current += shieldGain;
-        } else if (abilityData.target > 0) {
-          if (abilityData.target === 1 || abilityData.target === 2) {
+        } else if (abilityData.target === 3 || abilityData.target === 4) {
+          target.health.current -= damage;
+          target.health.current += healthGain;
+          target.mana.current += manaGain;
+          target.stamina.current += staminaGain;
+          target.shield.current += shieldGain;
+        }
+      }
+      if (abilityData.effects) {
+        let calcEffect = {};
+        for (let i = 0; i < abilityData.effects.length; i++) {
+          let effect = abilityData.effects[i];
+          calcEffect.name = effect.name;
+          calcEffect.turns = effect.turns;
+          calcEffect.modifiers = [];
+          calcEffect.values = [];
+          for (let j = 0; j < effect.modifiers.length; j++) {
+            let modifier = effect.modifiers[j];
+            let list = [];
+            if (attributeList.includes(modifier.target)) {
+              list.push("attributes");
+              list.push(modifier.target);
+              list.push("default");
+            } else if (buffList.includes(modifier.target)) {
+              list.push("buffs");
+              list.push(modifier.target);
+              list.push("default");
+            } else if (debuffList.includes(modifier.target)) {
+              list.push("debuffs");
+              list.push(modifier.target);
+              list.push("default");
+            } else if (mindList.includes(modifier.target)) {
+              list.push("mind");
+              list.push(modifier.target);
+            } else if (bodyList.includes(modifier.target)) {
+              list.push("body");
+              list.push(modifier.target);
+            } else if (soulList.includes(modifier.target)) {
+              list.push("soul");
+              list.push(modifier.target);
+            }
+            calcEffect.modifiers.push(list);
+            modValue = modifier.scale.value;
+            if (modifier.scale.scaled) {
+              modValue *= calcMultiplier(charData, modifier.scale);
+            }
+            calcEffect.values.push(modValue);
+          }
+          if (effect.target === 0 || effect.target === 1 || (isPlayer && effect.target === 2)) {
+            let effectTarget = effect.target === 0 ? character : target;
+            for (let i = 0; i < calcEffect.modifiers.length; i++) {
+              let modifier = calcEffect.modifiers[i];
+              if (modifier.length === 3) {
+                effectTarget[modifier[0]][modifier[1]][modifier[2]] += calcEffect.values[i];
+              } else if (modifier.length === 2) {
+                effectTarget[modifier[0]][modifier[1]] += calcEffect.values[i];
+              }
+            }
+            effectTarget.effects.push(calcEffect);
+            await effectTarget.save();
+          } else if ((!isPlayer && effect.target === 2) || (isPlayer && effect.target === 3)) {
+            //target 2 Only implemented for occupants to damage all players
+            //target 3 Only implemented for players to buff all players
+            for (let i = 0; i < dungeon.players.length; i++) {
+              const effectTarget = await Character.findById(dungeon.players[i]);
+              for (let j = 0; j < calcEffect.modifiers.length; j++) {
+                let modifier = calcEffect.modifiers[j];
+                if (modifier.length === 3) {
+                  effectTarget[modifier[0]][modifier[1]][modifier[2]] += calcEffect.values[j];
+                } else if (modifier.length === 2) {
+                  effectTarget[modifier[0]][modifier[1]] += calcEffect.values[j];
+                }
+              }
+              effectTarget.effects.push(calcEffect);
+              await effectTarget.save();
+            }
+          }
+        }
+      }
+    } else {
+      if (abilityData.target === 0) {
+        character.health.current -= damage;
+        character.health.current += healthGain;
+        character.mana.current += manaGain;
+        character.stamina.current += staminaGain;
+        character.shield.current += shieldGain;
+      } else if (abilityData.target > 0) {
+        if (abilityData.target === 1 || abilityData.target === 3) {
+          if (abilityData.target === 1) {
             target.health.current -= damage;
             character.health.current += healthGain;
             character.mana.current += manaGain;
             character.stamina.current += staminaGain;
             character.shield.current += shieldGain;
-          } else if (abilityData.target === 3 || abilityData.target === 4) {
+          } else if (abilityData.target === 3) {
             target.health.current -= damage;
             target.health.current += healthGain;
             target.mana.current += manaGain;
             target.stamina.current += staminaGain;
             target.shield.current += shieldGain;
           }
-        }
-        if (abilityData.effects) {
-          let effects = [];
-          for (let i = 0; i < abilityData.effects.length; i++) {
-            let effect = abilityData.effects[i];
-            let calcEffect = {};
-            calcEffect.name = effect.name;
-            calcEffect.turns = effect.turns;
-            calcEffect.modifiers = [];
-            calcEffect.values = [];
-            for (let j = 0; j < effect.modifiers.length; j++) {
-              let modifier = effect.modifiers[j];
-              let list = [];
-              if (attributeList.includes(modifier.target)) {
-                list.push("attributes");
-                list.push(modifier.target);
-                list.push("default");
-              } else if (buffList.includes(modifier.target)) {
-                list.push("buffs");
-                list.push(modifier.target);
-                list.push("default");
-              } else if (debuffList.includes(modifier.target)) {
-                list.push("debuffs");
-                list.push(modifier.target);
-                list.push("default");
-              } else if (mindList.includes(modifier.target)) {
-                list.push("mind");
-                list.push(modifier.target);
-              } else if (bodyList.includes(modifier.target)) {
-                list.push("body");
-                list.push(modifier.target);
-              } else if (soulList.includes(modifier.target)) {
-                list.push("soul");
-                list.push(modifier.target);
-              }
-              calcEffect.modifiers.push(list);
-              modValue = modifier.scale.value;
-              if (modifier.scale.scaled) {
-                modValue *= calcMultiplier(charData, modifier.scale);
-              }
-              calcEffect.values.push(modValue);
+        } else if (abilityData.target === 2 || abilityData.target === 4) {
+          if (abilityData.target === 2) {
+            for (let i = 0; i < dungeon.players.length; i++) {
+              const player = await Character.findById(dungeon.players[i]);
+              player.health.current -= damage;
+              await player.save();
             }
-            if (effect.target === 0 || effect.target === 1 || (isPlayer && effect.target === 2)) {
-              let effectTarget = effect.target === 0 ? character : target;
-              for (let i = 0; i < calcEffect.modifiers.length; i++) {
-                let modifier = calcEffect.modifiers[i];
-                if (modifier.length === 3) {
-                  effectTarget[modifier[0]][modifier[1]][modifier[2]] += calcEffect.values[i];
-                } else if (modifier.length === 2) {
-                  effectTarget[modifier[0]][modifier[1]] += calcEffect.values[i];
-                }
-              }
-              effectTarget.effects.push(calcEffect);
-              await effectTarget.save();
-            } else if ((!isPlayer && effect.target === 2) || (isPlayer && effect.target === 3)) {
-              //target 2 Only implemented for occupants to damage all players
-              //target 3 Only implemented for players to buff all players
-              for (let i = 0; i < dungeon.players.length; i++) {
-                const effectTarget = await Character.findById(dungeon.players[i]);
-                for (let j = 0; j < calcEffect.modifiers.length; j++) {
-                  let modifier = calcEffect.modifiers[j];
-                  if (modifier.length === 3) {
-                    effectTarget[modifier[0]][modifier[1]][modifier[2]] += calcEffect.values[j];
-                  } else if (modifier.length === 2) {
-                    effectTarget[modifier[0]][modifier[1]] += calcEffect.values[j];
-                  }
-                }
-                effectTarget.effects.push(calcEffect);
-                await effectTarget.save();
-              }
-            }
-          }
-        }
-      } else {
-        if (abilityData.target === 0) {
-          character.health.current -= damage;
-          character.health.current += healthGain;
-          character.mana.current += manaGain;
-          character.stamina.current += staminaGain;
-          character.shield.current += shieldGain;
-        } else if (abilityData.target > 0) {
-          if (abilityData.target === 1 || abilityData.target === 3) {
-            if (abilityData.target === 1) {
-              target.health.current -= damage;
-              character.health.current += healthGain;
-              character.mana.current += manaGain;
-              character.stamina.current += staminaGain;
-              character.shield.current += shieldGain;
-            } else if (abilityData.target === 3) {
-              target.health.current -= damage;
-              target.health.current += healthGain;
-              target.mana.current += manaGain;
-              target.stamina.current += staminaGain;
-              target.shield.current += shieldGain;
-            }
-          } else if (abilityData.target === 2 || abilityData.target === 4) {
-            if (abilityData.target === 2) {
-              for (let i = 0; i < dungeon.players.length; i++) {
-                const player = await Character.findById(dungeon.players[i]);
-                player.health.current -= damage;
-                await player.save();
-              }
-              character.health.current += healthGain;
-              character.mana.current += manaGain;
-              character.stamina.current += staminaGain;
-              character.shield.current += shieldGain;
-            } else if (abilityData.target === 4) {
-              for (let i = 0; i < dungeon.players.length; i++) {
-                let player = await Character.findById(dungeon.players[i]);
-                player.health.current -= damage;
-                player.health.current += healthGain;
-                player.mana.current += manaGain;
-                player.stamina.current += staminaGain;
-                player.shield.current += shieldGain;
-                await player.save();
-              }
+            character.health.current += healthGain;
+            character.mana.current += manaGain;
+            character.stamina.current += staminaGain;
+            character.shield.current += shieldGain;
+          } else if (abilityData.target === 4) {
+            for (let i = 0; i < dungeon.players.length; i++) {
+              let player = await Character.findById(dungeon.players[i]);
+              player.health.current -= damage;
+              player.health.current += healthGain;
+              player.mana.current += manaGain;
+              player.stamina.current += staminaGain;
+              player.shield.current += shieldGain;
+              await player.save();
             }
           }
         }
       }
     }
-    character.save();
-    target.save();
   }
+  character.save();
+  target.save();
 }
 
 async function getTotalStats(character) {
@@ -603,12 +667,20 @@ async function prepAbility(characterId, dungeonId, slot) {
     //Finally making sure that the ability is not on cooldown
     if (abilitiesInv[slot].item && slotChecker(character.slots, slot) && character.cooldowns[slotIndex] === 0) {
       const ability = await getAbilityData(abilitiesInv[slot].item);
+      const item = await getItemData(abilitiesInv[slot].item);
       const charData = await getCharOutput(characterId);
       const isPlayer = side === "player" ? true : false;
-      await useAbility(charData, ability, dungeon, isPlayer);
-      await nextTurn(dungeonId);
-      character.cooldowns[slotIndex] += ability.lvl;
-      await Character.findByIdAndUpdate(characterId, { cooldowns: character.cooldowns });
+      let canUse = checkReqs(charData, ability);
+      dungeon.log.push(`${character.name} uses ${item.name.toLowerCase()}`);
+      if (canUse) {
+        await useAbility(charData, ability, dungeon, isPlayer);
+        await nextTurn(dungeonId);
+        character.cooldowns[slotIndex] += ability.lvl;
+        await Character.findByIdAndUpdate(characterId, { cooldowns: character.cooldowns });
+        await Dungeon.findByIdAndUpdate(dungeonId, { log: dungeon.log });
+      } else {
+        await nextTurn(dungeonId);
+      }
       return true;
     }
     return false;
@@ -635,10 +707,12 @@ function getDivisions(character, stat) {
 
 async function getCharOutput(characterId) {
   const character = await Character.findById(characterId);
+  console.log
   if (character) {
     const totalStats = await getTotalStats(character);
     if (totalStats) {
       const divisions = getDivisions(character, totalStats);
+      const abilitiesInv = await AbilitiesInv.findById(character.abilitiesInv);
       const charOutput = {
         id: character.id,
         ai: character.ai,
@@ -648,7 +722,7 @@ async function getCharOutput(characterId) {
         humanity: character.humanity,
         alignment: character.alignment,
         skin: character.skins[0][0],
-        abilitiesInv: character.abilitiesInv,
+        abilitiesInv,
         cooldowns: character.cooldowns,
         mind: totalStats.mind,
         body: totalStats.body,
@@ -1038,6 +1112,13 @@ async function embark(dungeonId) {
       dungeon.currRoom = -1;
     } else {
       dungeon.currRoom = targetRoom;
+      if(isBoss){
+        if(dungeon.currFloor < dungeon.floors.length) {
+          dungeon.currFloor += 1;
+        } else {
+          //Write code to leave the dungeon
+        }
+      }
     }
 
     //reset character overhealth and overshield on embarking
@@ -1060,6 +1141,9 @@ async function embark(dungeonId) {
     }
 
     await Dungeon.findByIdAndUpdate(dungeonId, { actions: dungeon.actions, leadingToVote: dungeon.leadingToVote });
+    if (dungeon.occupants[0]) {
+      await destroyCharacter(dungeon.occupants[0], false);
+    }
     await dungeon.save();
 
     // Spawning the next creature
@@ -1131,16 +1215,24 @@ async function passTurn(characterId) {
           //Removing each of the effects on the character
           for (let j = 0; j < effect.modifiers.length; j++) {
             let modifier = effect.modifiers[j];
+            let value = effect.values[j];
             if (modifier.length === 3) {
-              character[modifier[0]][modifier[1]][modifier[2]] -= calcEffect.values[i];
+              character[modifier[0]][modifier[1]][modifier[2]] -= value;
             } else if (modifier.length === 2) {
-              character[modifier[0]][modifier[1]] -= calcEffect.values[i];
+              character[modifier[0]][modifier[1]] -= value;
             }
           }
-
-          character.save();
+          await Character.findByIdAndUpdate(characterId);
         }
       }
+      //Subtracting one from all cooldowns
+      for (let i = 0; i < character.cooldowns.length; i++) {
+        let cooldown = character.cooldowns[i];
+        if (cooldown > 0) {
+          character.cooldowns[i] -= 1;
+        }
+      }
+      await Character.findByIdAndUpdate(characterId, { cooldowns: character.cooldowns });
       character.save();
       let initiative = charData.body.dexterity * 2 + charData.soul.will + charData.mind.projection * 0.5 + charData.soul.clarity * 0.5;
       return initiative;
@@ -1157,7 +1249,7 @@ async function startTurn(characterId) {
   }
   let character = await Character.findById(characterId);
   if (character) {
-    console.log(`${character.name} has started their turn`);
+    //Write code for turn start
   } else {
     throw new Error("Invalid Character");
   }
@@ -1188,7 +1280,7 @@ async function nextTurn(dungeonId) {
       dungeon.turn[0][0] = dungeon.turn[1][currActor + 1];
     }
     dungeon.markModified("turn");
-    dungeon.save();
+    await dungeon.save();
     startTurn(dungeon.turn[0][0]);
   } else {
     throw new Error("Invalid Dungeon");
@@ -1430,7 +1522,7 @@ module.exports = {
 
           //Getting the data setup
           let isBoss = dungeon.currRoom === -1 ? true : false;
-          let room = isBoss ? dungeon.bossRooms[currFloor] : dungeon.floors[dungeon.currFloor][dungeon.currRoom];
+          let room = isBoss ? dungeon.bossRooms[dungeon.currFloor] : dungeon.floors[dungeon.currFloor][dungeon.currRoom];
           let leadingRooms = [];
           for (let k = 0; k < dungeon.leadingTo.length; k++) {
             let targetRoom = dungeon.currRoom + dungeon.leadingTo[k];
@@ -1438,8 +1530,9 @@ module.exports = {
             let leadingRoom;
             if (targetRoom < floorLength) {
               leadingRoom = dungeon.floors[dungeon.currFloor][targetRoom];
-            } else if (targetRoom > floorLength) {
+            } else if (targetRoom >= floorLength) {
               leadingRoom = dungeon.bossRooms[dungeon.currFloor];
+              leadingRoom.environment = "Boss Room";
             }
             let leadingOutput = { environment: leadingRoom.environment, vote: dungeon.leadingToVote[k] };
             leadingRooms.push(leadingOutput);
@@ -1487,118 +1580,134 @@ module.exports = {
           //If there aren't timestamps, make them
           // 0 timestamp is for how long a player has been on a floor
           // 1 timestamp is how long a player has not been on a floor
-          if (!isHostile(dungeonOutput)) {
-            let totalRest = dungeon.actions.data[0].length;
-            let totalEmbark = dungeon.actions.data[1].length;
-            let totalVotes = totalRest + totalEmbark;
-            let maxVotes = dungeon.players.length;
+          let activeIndex = 0;
+          let currPlayer = dungeon.players.indexOf(characterId);
+          let currTime = new Date().getTime();
 
-            if (totalRest + totalEmbark > 0) {
-              if (!dungeon.timestamp[1]) {
-                dungeon.timestamp[1] = new Date().getTime();
+          let secondSort = [];
+
+          for (let i = 0; i < dungeon.players.length; i++) {
+            secondSort[i] = currTime - dungeon.active[i];
+          }
+          let mostActive = secondSort[activeIndex];
+          if (secondSort.length > 1) {
+            for (let i = 1; i < secondSort.length; i++) {
+              if (secondSort[i] <= mostActive) {
+                mostActive = secondSort[i];
+                activeIndex = i;
               }
-
-              let oldTime = Number.isFinite(dungeon.timestamp[1]) ? dungeon.timestamp[1] : parseInt(dungeon.timestamp[1]);
-              let currTime = new Date().getTime();
-              let seconds = (currTime - oldTime) / 1000;
-              let forceVote = seconds >= 30;
-              let minVote = seconds >= 2;
-              let secondSort = [];
-
-              for (let i = 0; i < dungeon.players.length; i++) {
-                secondSort[i] = currTime - dungeon.active[i];
-              }
-              let activeIndex = 0;
-              let mostActive = secondSort[activeIndex];
-              if (secondSort.length > 1) {
-                for (let i = 1; i < secondSort.length; i++) {
-                  if (secondSort[i] <= mostActive) {
-                    mostActive = secondSort[i];
-                    activeIndex = i;
-                  }
-                }
-              }
-
-              let currPlayer = dungeon.players.indexOf(characterId);
-
-              if (totalVotes === maxVotes && minVote && activeIndex === currPlayer) {
-                if (totalEmbark > totalRest) {
-                  embark(dungeonId);
-                } else {
-                  rest(dungeonId);
-                }
-                dungeon.timestamp[0] = new Date();
-                dungeon.timestamp[1] = null;
-              } else if (totalVotes < maxVotes && forceVote && activeIndex === currPlayer) {
-                if (totalEmbark > totalRest) {
-                  embark(dungeonId);
-                } else {
-                  rest(dungeonId);
-                }
-                dungeon.timestamp[0] = new Date();
-                dungeon.timestamp[1] = null;
-              }
-            } else if (totalRest + totalEmbark < 0) {
-              dungeon.timestamp[1] = null;
             }
           }
 
-          //Turn Manager
-          //-1 Indicate its a free turn, meaning the first person who acts initiates
-          if (!isHostile(dungeonOutput)) {
-            //For non hostiles, just resetting the turns
-            dungeon.turn[0] = "general";
-            dungeon.turn[1] = [];
-          } else if (isHostile(dungeonOutput)) {
-            //For hostiles, we want to check if turns have been set, and if not we'll set them
-            if (dungeon.turn[0][0] === "general") {
-              let allActors = players.concat(occupants);
-              let turnData = [[], []];
-              if (allActors.length > 1) {
-                for (let i = 0; i < allActors.length; i++) {
-                  let actor = allActors[i];
-                  let initiative = actor.body.dexterity * 2 + actor.soul.will + actor.mind.projection * 0.5 + actor.soul.clarity * 0.5;
-                  turnData[0].push(actor.id);
-                  turnData[1].push(initiative);
+          //Only run this if the current player is the most active
+          if (currPlayer === activeIndex) {
+            if (!isHostile(dungeonOutput)) {
+              let totalRest = dungeon.actions.data[0].length;
+              let totalEmbark = dungeon.actions.data[1].length;
+              let totalVotes = totalRest + totalEmbark;
+              let maxVotes = dungeon.players.length;
+
+              if (totalRest + totalEmbark > 0) {
+                if (!dungeon.timestamp[1]) {
+                  dungeon.timestamp[1] = new Date().getTime();
                 }
 
-                let sortedData = sortArray(turnData[0], turnData[1]);
-                dungeon.turn = [[sortedData[0]], sortedData];
+                let oldTime = Number.isFinite(dungeon.timestamp[1]) ? dungeon.timestamp[1] : parseInt(dungeon.timestamp[1]);
+                let seconds = (currTime - oldTime) / 1000;
+                let forceVote = seconds >= 30;
+                let minVote = seconds >= 2;
+
+                if (totalVotes === maxVotes && minVote && activeIndex === currPlayer) {
+                  if (totalEmbark > totalRest) {
+                    embark(dungeonId);
+                  } else {
+                    rest(dungeonId);
+                  }
+                  dungeon.timestamp[0] = new Date();
+                  dungeon.timestamp[1] = null;
+                } else if (totalVotes < maxVotes && forceVote && activeIndex === currPlayer) {
+                  if (totalEmbark > totalRest) {
+                    embark(dungeonId);
+                  } else {
+                    rest(dungeonId);
+                  }
+                  dungeon.timestamp[0] = new Date();
+                  dungeon.timestamp[1] = null;
+                }
+              } else if (totalRest + totalEmbark < 0) {
+                dungeon.timestamp[1] = null;
               }
             }
-            //Otherwise, we want to check if the current hostiles turn is a mob or if its a idle player
-            if(dungeon.turn[0][0] === dungeon.occupants[0]){
-              let allIds = dungeon.players.concat(dungeon.occupants)
+
+            //Turn Manager
+            //-1 Indicate its a free turn, meaning the first person who acts initiates
+            if (!isHostile(dungeonOutput)) {
+              //For non hostiles, just resetting the turns
+              dungeon.turn[0][0] = "general";
+              dungeon.turn[1] = [];
+              await Dungeon.findByIdAndUpdate(dungeonId, { turn: dungeon.turn });
+            } else if (isHostile(dungeonOutput)) {
+              //For hostiles, we want to check if turns have been set, and if not we'll set them
               let allActors = players.concat(occupants);
-              let currActor = allActors[allIds.indexOf(dungeon.turn[0][0])];
-              let AI = currActor.ai;
-              //First we need to get the index of the available abilities
-              let available = [];
-              for(let i = 0; i < currActor.abilitiesInv.length; i++){
-                let currSlot = currActor.abilitiesInv[i].item;
-                //If there is an ability in that slot
-                if(currSlot){
-                  if(currActor.cooldowns[i] === 0) {
-                    available.push(i);
-                  }
+              for(let i = 0; i < allActors.length; i++){
+                let actor = allActors[i];
+                if(actor.health.current <= 0){
+                  let isPlayer = i >= dungeon.players.length ? false : true;
+                  destroyCharacter(actor.id, isPlayer);
                 }
               }
 
-              //Prepping variables and getting the random slot, in case the AI uses random
-              let valid;
-              let randomSlot = slotList[slotList.indexOf(available[Math.floor(Math.random() * available.length())])]
+              if (dungeon.turn[0][0] === "general") {
+                let turnData = [[], []];
+                if (allActors.length > 1) {
+                  for (let i = 0; i < allActors.length; i++) {
+                    let actor = allActors[i];
+                    let initiative = actor.body.dexterity * 2 + actor.soul.will + actor.mind.projection * 0.5 + actor.soul.clarity * 0.5;
+                    turnData[0].push(actor.id);
+                    turnData[1].push(initiative);
+                  }
 
-              //Run the actual AI, but first we need to check if it has any available. If it doesn't we will just skip
-              if(available.length === 0){
-                await nextTurn(dungeonId);
-              } else if(AI === "mob"){
-                valid = await prepAbility(currActor.id, dungeonId, randomSlot)
-              } else if(AI === "mob_burst"){
-                //mob_burst priortizes the first ability, so if the first ability is available (index 0) then it will always use it
-                if(available.includes(0)){
-                  valid = await prepAbility(currActor.id, dungeonId, "slotOne")
-                } else {
-                  valid = await prepAbility(currActor.id, dungeonId, randomSlot)
+                  let sortedData = sortArray(turnData[0], turnData[1]);
+                  dungeon.turn = [[sortedData[0]], sortedData];
+                  await Dungeon.findByIdAndUpdate(dungeonId, { turn: dungeon.turn });
+                }
+              }
+              //Otherwise, we want to check if the current hostiles turn is a mob or if its a idle player
+              if (dungeon.turn[0][0] === dungeon.occupants[0]) {
+                let allIds = dungeon.players.concat(dungeon.occupants);
+                let allActors = players.concat(occupants);
+                let currActor = allActors[allIds.indexOf(dungeon.turn[0][0])];
+                let AI = currActor.ai;
+                let available = [];
+
+                //First we need to get the index of the available abilities
+                for (let i = 0; i < slotList.length; i++) {
+                  let currSlot = currActor.abilitiesInv[slotList[i]].item;
+                  //If there is an ability in that slot
+                  if (currSlot) {
+                    if (currActor.cooldowns[i] === 0) {
+                      available.push(i);
+                    }
+                  }
+                }
+
+                //Prepping variables and getting the random slot, in case the AI uses random
+                let valid;
+                let randIndex = Math.floor(Math.random() * available.length);
+                let randomSlot = slotList[available[randIndex]];
+
+                //Run the actual AI, but first we need to check if it has any available. If it doesn't we will just skip
+                if (available.length === 0) {
+                  await nextTurn(dungeonId);
+                } else if (AI === "mob") {
+                  valid = await prepAbility(currActor.id, dungeonId, randomSlot);
+                } else if (AI === "mob_burst") {
+                  //mob_burst priortizes the first ability, so if the first ability is available (index 0) then it will always use it
+                  if (available.includes(0)) {
+                    valid = await prepAbility(currActor.id, dungeonId, "slotOne");
+                  } else {
+                    valid = await prepAbility(currActor.id, dungeonId, randomSlot);
+                  }
                 }
               }
             }
@@ -1606,7 +1715,7 @@ module.exports = {
 
           let charIndex = dungeon.players.indexOf(characterId);
           dungeon.active[charIndex] = new Date().getTime();
-          await Dungeon.findByIdAndUpdate(dungeonId, { timestamp: dungeon.timestamp, active: dungeon.active, turn: dungeon.turn });
+          await Dungeon.findByIdAndUpdate(dungeonId, { timestamp: dungeon.timestamp, active: dungeon.active });
           await dungeon.save();
           dungeonOutput.turn = dungeon.turn;
           return dungeonOutput;
@@ -1852,7 +1961,7 @@ module.exports = {
         tokenDistribution: tokenDist,
         return: locationId,
         log: starterLog,
-        turn: [["general"], []],
+        turn: [["general"]],
         timestamp: [],
         active,
       });
@@ -1865,10 +1974,10 @@ module.exports = {
         throw new Error("Invalid ID's for Use Ability");
       }
       let valid = await prepAbility(characterId, dungeonId, slot);
-      if(valid){
-        return "Ability Sent"
+      if (valid) {
+        return "Ability Sent";
       } else {
-        throw new Error("Ability usage failed")
+        throw new Error("Ability usage failed");
       }
     },
     async roomVote(_, { index, action, characterId, dungeonId }, context) {

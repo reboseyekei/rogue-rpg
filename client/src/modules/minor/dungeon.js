@@ -5,6 +5,7 @@ import gql from "graphql-tag";
 
 //Material UI
 import Grid from "@material-ui/core/Grid";
+import Slide from '@material-ui/core/Slide';
 
 //Contexts
 import { CharacterContext } from "../../helper/character";

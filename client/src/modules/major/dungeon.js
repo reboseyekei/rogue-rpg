@@ -5,6 +5,8 @@ import gql from "graphql-tag";
 
 //Material UI
 import Grid from "@material-ui/core/Grid";
+import Slide from "@material-ui/core/Slide";
+import Paper from "@material-ui/core/Paper";
 
 //Minor Modules
 import Modal from "../minor/modal";
@@ -55,7 +57,7 @@ export default function Settlement() {
   let isPlace = character.place ? false : true;
   const { loading: characterLoad, data: characterData, refetch } = useQuery(FETCH_CHARACTER, { variables: { characterId }, pollInterval: 500 });
   const { loading: dungeonLoad, data: dungeonData } = useQuery(FETCH_DUNGEON_OUTPUT, {
-    variables: { dungeonId: character.place, characterId: character.characterId},
+    variables: { dungeonId: character.place, characterId: character.characterId },
     skip: isPlace,
     pollInterval: 100,
   });
@@ -90,15 +92,31 @@ export default function Settlement() {
         <Grid item md={10} lg={11} align="center" style={{ backgroundColor: "#000" }}>
           {dungeonData ? (
             <Grid container alignContent="space-between" style={{ height: "100%" }}>
-              <Grid item xs={4} style={{height: "42.5%"}}>
-                <DungeonUI dungeon={dungeonData.getDungeonOutput} dungeonLoad={dungeonLoad}/>
+              <Grid item xs={4} style={{ height: "42.5%" }}>
+                <Slide direction="down" in={true} mountOnEnter unmountOnExit>
+                    <Grid item xs={12}>
+                      <DungeonUI dungeon={dungeonData.getDungeonOutput} dungeonLoad={dungeonLoad} />
+                    </Grid>
+                  </Slide>
               </Grid>
               <Grid item xs={1}></Grid>
               <Grid item xs={7}>
-                {dungeonData.getDungeonOutput.occupants[0] ? <Occupant occupant={dungeonData.getDungeonOutput.occupants[0]} turn={dungeonData.getDungeonOutput.turn}/> : ""}
+                {dungeonData.getDungeonOutput.occupants[0] ? (
+                  <Slide direction="down" in={!!dungeonData.getDungeonOutput.occupants[0]} mountOnEnter unmountOnExit>
+                    <Grid item xs={12}>
+                      <Occupant occupant={dungeonData.getDungeonOutput.occupants[0]} turn={dungeonData.getDungeonOutput.turn} />
+                    </Grid>
+                  </Slide>
+                ) : (
+                  ""
+                )}
               </Grid>
               <Grid item xs={12}>
-                <Players players={dungeonData.getDungeonOutput.players} turn={dungeonData.getDungeonOutput.turn}/>
+                <Slide direction="up" in={true} mountOnEnter unmountOnExit>
+                  <Grid item xs={12}>
+                    <Players players={dungeonData.getDungeonOutput.players} turn={dungeonData.getDungeonOutput.turn} />
+                  </Grid>
+                </Slide>
               </Grid>
             </Grid>
           ) : (

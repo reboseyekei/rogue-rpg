@@ -98,8 +98,6 @@ export default function DungeonUI({ dungeon, dungeonLoad }) {
     return dungeon.tokens[index];
   };
 
-  console.log(abilitiesInvData);
-
   const isHostile = () => {
     if (dungeon.occupants.length >= 1) {
       for (let i = 0; i < dungeon.occupants.length; i++) {
@@ -122,7 +120,7 @@ export default function DungeonUI({ dungeon, dungeonLoad }) {
 
   const titleGenerator = () => {
     let title = ``;
-    if (isHostile) {
+    if (isHostile()) {
       if (dungeon.turn[0][0] === charContext.characterId) {
         title = `It is your turn`;
       } else {
@@ -130,7 +128,7 @@ export default function DungeonUI({ dungeon, dungeonLoad }) {
         let currPlayer = dungeon.players[currPlayerIndex];
         if (currPlayer) {
           title = `It is ${currPlayer.name}'s turn`;
-        } else {
+        } else if (dungeon.occupants[0]){
           title = `It is the ${dungeon.occupants[0].spirit}'s turn`;
         }
       }

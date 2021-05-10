@@ -1012,10 +1012,6 @@ function parseSlottedAbility(slot, character, equipped) {
     targets.push(parseTarget(slot.ability, fields[i]));
   }
 
-  console.log(fields)
-  console.log(targets)
-
-
   //Looping through each field
   for (let i = 0; i < fields.length; i++) {
     if (Array.isArray(targets[i])) {

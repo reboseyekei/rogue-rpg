@@ -30,6 +30,8 @@ integrate: cap, place, location, humanity, canEquip, defRes, debuffRes, skins, l
 -optimize passing turn code (gets character data like 4 times)
 -allow displaying multiple occupants
 -add embarking flavor text to log
--add buffs and debuffs to stat calculations
-
+-implement attributes, buffs, and debuffs to pass turn calculations and initiative
+-implement buffs and debuffs to a new character output function (ex strong should double effective strength)
+-in the future the ai on characters needs to store actual data
+-put in idle functionality for players
 
